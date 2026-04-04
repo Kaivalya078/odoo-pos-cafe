@@ -10,12 +10,12 @@ const { protect, authorizeRoles } = require('../middleware/authMiddleware');
 
 const router = express.Router();
 
-router.use(protect, authorizeRoles('OWNER', 'ADMIN'));
-
-// /floor/:floorId must be declared before /:id to avoid param conflicts
-router.get('/floor/:floorId', getTablesByFloor);
-
+// ── PUBLIC — customers need this to select a table (no token required) ────────
 router.get('/', getAllTables);
+
+// ── OWNER / ADMIN only ────────────────────────────────────────────────────────
+router.use(protect, authorizeRoles('OWNER', 'ADMIN'));
+router.get('/floor/:floorId', getTablesByFloor);
 router.post('/', createTable);
 router.patch('/:id/status', updateTableStatus);
 router.delete('/:id', deleteTable);
