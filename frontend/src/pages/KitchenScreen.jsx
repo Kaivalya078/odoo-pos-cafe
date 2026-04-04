@@ -24,7 +24,7 @@ export default function KitchenScreen() {
 
   // ── Orders state ───────────────────────────────────────────────────────────
   const [orders, setOrders] = useState([]);
-  const [activeTab, setActiveTab] = useState('ALL');
+  const [activeTab, setActiveTab] = useState('APPROVED');
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);

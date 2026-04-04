@@ -2,14 +2,14 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useRestaurant } from '../context/RestaurantContext';
 import { getAllUsers, createUser, updateUserRole, updateUpi, getUpi } from '../services/userService';
-import { Users, UserPlus, Crown, TrendingUp, Smartphone, CheckCircle } from 'lucide-react';
+import { Users, UserPlus, Crown, Smartphone, CheckCircle, Edit3, QrCode } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const VALID_ROLES = ['OWNER', 'ADMIN', 'KITCHEN', 'CASHIER'];
 
 export default function OwnerPanel() {
   const { user: currentUser } = useAuth();
-  const { status, toggleStatus } = useRestaurant();
+  const { status, lastSession, toggleStatus } = useRestaurant();
 
   const [users, setUsers] = useState([]);
   const [loadingUsers, setLoadingUsers] = useState(true);
@@ -26,6 +26,7 @@ export default function OwnerPanel() {
   const [upiInput, setUpiInput] = useState('');
   const [savedUpi, setSavedUpi] = useState(null);
   const [savingUpi, setSavingUpi] = useState(false);
+  const [editingUpi, setEditingUpi] = useState(false);
 
   const fetchUsers = useCallback(async () => {
     try {
@@ -108,6 +109,7 @@ export default function OwnerPanel() {
     try {
       await updateUpi(upiInput.trim());
       setSavedUpi(upiInput.trim());
+      setEditingUpi(false);
       toast.success('UPI ID saved! QR payments are now enabled for cashiers.');
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to save UPI ID');
@@ -147,43 +149,91 @@ export default function OwnerPanel() {
             {toggling ? 'Updating…' : status === 'OPEN' ? 'Close Restaurant' : 'Open Restaurant'}
           </button>
         </div>
-      </div>
-
-      {/* UPI Payment Settings */}
-      <div className="upi-settings-card">
-        <div className="upi-settings-header">
-          <div className="upi-settings-icon"><Smartphone size={18} /></div>
-          <div>
-            <div className="upi-settings-title">UPI Payment Settings</div>
-            <div className="upi-settings-subtitle">
-              Set your UPI ID so cashiers can generate QR codes for customer payments
+        {status === 'CLOSED' && lastSession && lastSession.lastClosedAt && (
+          <div className="last-session-summary">
+            <div className="last-session-title">Last Session Summary</div>
+            <div className="last-session-grid">
+              <div className="last-session-item">
+                <div className="last-session-label">🟢 Opened</div>
+                <div className="last-session-value">
+                  {lastSession.lastOpenedAt
+                    ? new Date(lastSession.lastOpenedAt).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true })
+                    : '—'}
+                </div>
+              </div>
+              <div className="last-session-item">
+                <div className="last-session-label">🔴 Closed</div>
+                <div className="last-session-value">
+                  {new Date(lastSession.lastClosedAt).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true })}
+                </div>
+              </div>
+              <div className="last-session-item last-session-item--highlight">
+                <div className="last-session-label">💰 Revenue</div>
+                <div className="last-session-value last-session-revenue">₹{(lastSession.totalRevenue || 0).toFixed(2)}</div>
+              </div>
+              <div className="last-session-item">
+                <div className="last-session-label">📦 Orders</div>
+                <div className="last-session-value">{lastSession.totalOrders ?? 0} paid orders</div>
+              </div>
             </div>
           </div>
-        </div>
-        {savedUpi && (
-          <div className="upi-current">
-            <CheckCircle size={13} /> Active: {savedUpi}
-          </div>
         )}
-        <form onSubmit={handleSaveUpi} style={{ display: 'flex', gap: 'var(--space-sm)', flexWrap: 'wrap' }}>
-          <input
-            id="upi-id-input"
-            className="form-input"
-            type="text"
-            placeholder="e.g. yourname@upi or 9876543210@paytm"
-            value={upiInput}
-            onChange={(e) => setUpiInput(e.target.value)}
-            style={{ flex: 1, minWidth: 220 }}
-          />
-          <button
-            type="submit"
-            className="btn btn-primary"
-            disabled={savingUpi}
-            id="save-upi-btn"
-          >
-            {savingUpi ? 'Saving…' : savedUpi ? 'Update UPI' : 'Save UPI'}
-          </button>
-        </form>
+      </div>
+
+      {/* UPI Payment Settings — redesigned */}
+      <div className="card upi-card">
+        <div className="card-title"><Smartphone size={16} />UPI Payment Settings</div>
+        <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 'var(--space-lg)', marginTop: -4 }}>
+          Set your UPI ID so cashiers can generate QR codes for customer payments.
+        </p>
+
+        {savedUpi && !editingUpi ? (
+          /* ── Saved state: show the ID with an edit button ── */
+          <div className="upi-saved-state">
+            <div className="upi-saved-left">
+              <div className="upi-saved-icon"><QrCode size={20} /></div>
+              <div>
+                <div className="upi-saved-label">Active UPI ID</div>
+                <div className="upi-saved-id">{savedUpi}</div>
+              </div>
+            </div>
+            <div className="upi-saved-actions">
+              <span className="upi-active-badge"><CheckCircle size={12} />Active</span>
+              <button
+                className="btn btn-secondary btn-sm"
+                onClick={() => setEditingUpi(true)}
+                id="edit-upi-btn"
+              >
+                <Edit3 size={13} />Change UPI
+              </button>
+            </div>
+          </div>
+        ) : (
+          /* ── Edit/Add state ── */
+          <form onSubmit={handleSaveUpi} className="upi-edit-form">
+            <div className="upi-input-wrap">
+              <Smartphone size={15} className="upi-input-icon" />
+              <input
+                id="upi-id-input"
+                className="form-input upi-input"
+                type="text"
+                placeholder="e.g. yourname@upi or 9876543210@paytm"
+                value={upiInput}
+                onChange={(e) => setUpiInput(e.target.value)}
+              />
+            </div>
+            <div className="upi-form-actions">
+              {savedUpi && (
+                <button type="button" className="btn btn-secondary btn-sm" onClick={() => { setUpiInput(savedUpi); setEditingUpi(false); }}>
+                  Cancel
+                </button>
+              )}
+              <button type="submit" className="btn btn-primary" disabled={savingUpi} id="save-upi-btn">
+                {savingUpi ? 'Saving…' : savedUpi ? 'Update UPI' : 'Save UPI'}
+              </button>
+            </div>
+          </form>
+        )}
       </div>
 
       {/* Stats */}

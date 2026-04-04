@@ -32,7 +32,7 @@ const TABS = [
 ];
 
 export default function AdminPanel() {
-  const { status, toggleStatus } = useRestaurant();
+  const { status, lastSession, toggleStatus } = useRestaurant();
   const [activeTab, setActiveTab] = useState('orders');
   const [toggling, setToggling] = useState(false);
 
@@ -279,6 +279,35 @@ export default function AdminPanel() {
                 {toggling ? 'Updating…' : status === 'OPEN' ? 'Close Restaurant' : 'Open Restaurant'}
               </button>
             </div>
+            {status === 'CLOSED' && lastSession && lastSession.lastClosedAt && (
+              <div className="last-session-summary">
+                <div className="last-session-title">Last Session Summary</div>
+                <div className="last-session-grid">
+                  <div className="last-session-item">
+                    <div className="last-session-label">🟢 Opened</div>
+                    <div className="last-session-value">
+                      {lastSession.lastOpenedAt
+                        ? new Date(lastSession.lastOpenedAt).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true })
+                        : '—'}
+                    </div>
+                  </div>
+                  <div className="last-session-item">
+                    <div className="last-session-label">🔴 Closed</div>
+                    <div className="last-session-value">
+                      {new Date(lastSession.lastClosedAt).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true })}
+                    </div>
+                  </div>
+                  <div className="last-session-item last-session-item--highlight">
+                    <div className="last-session-label">💰 Revenue</div>
+                    <div className="last-session-value last-session-revenue">₹{(lastSession.totalRevenue || 0).toFixed(2)}</div>
+                  </div>
+                  <div className="last-session-item">
+                    <div className="last-session-label">📦 Orders</div>
+                    <div className="last-session-value">{lastSession.totalOrders ?? 0} paid orders</div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Pending Orders */}

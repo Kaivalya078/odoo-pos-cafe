@@ -12,3 +12,7 @@ export const toggleRestaurantStatus = () => api.patch('/restaurant/toggle');
 // Body: { openingHour, closingHour }
 export const updateHours = (openingHour, closingHour) =>
   api.patch('/restaurant/hours', { openingHour, closingHour });
+
+// GET /api/restaurant/last-session
+// Response: { lastOpenedAt, lastClosedAt, totalRevenue, totalOrders }
+export const getLastSessionSummary = () => api.get('/restaurant/last-session');

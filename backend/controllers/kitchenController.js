@@ -1,12 +1,24 @@
+
 const asyncHandler = require('../utils/asyncHandler');
 const Order = require('../models/Order');
+const Restaurant = require('../models/Restaurant');
 
 // @route   GET /api/kitchen/orders
 // @access  Private (KITCHEN)
 const getKitchenOrders = asyncHandler(async (req, res) => {
-  const orders = await Order.find({
-    status: { $in: ['APPROVED', 'PREPARING', 'PREPARED'] },
-  })
+  const restaurant = await Restaurant.findOne();
+  if (!restaurant || restaurant.status === 'CLOSED') {
+    // Restaurant is closed, show no orders
+    return res.status(200).json({ success: true, data: [] });
+  }
+  // Only show APPROVED and PREPARING orders created after lastOpenedAt
+  const filter = {
+    status: { $in: ['APPROVED', 'PREPARING'] },
+  };
+  if (restaurant.lastOpenedAt) {
+    filter.createdAt = { $gte: restaurant.lastOpenedAt };
+  }
+  const orders = await Order.find(filter)
     .populate('table', 'tableNumber')
     .select('customerName status items createdAt table')
     .sort({ createdAt: 1 })
