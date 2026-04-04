@@ -4627,7 +4627,7 @@ ul, ol {
   .ts-grid { grid-template-columns: 1fr 1fr; }
 }
 
-<<<<<<< HEAD
+
 
 
 /* ===== LAST SESSION SUMMARY ===== */
@@ -4672,7 +4672,7 @@ ul, ol {
 .upi-input-icon { position: absolute; left: 12px; color: var(--text-muted); pointer-events: none; }
 .upi-input { padding-left: 36px !important; }
 .upi-form-actions { display: flex; gap: var(--space-sm); justify-content: flex-end; }
-=======
+
 /* ================================================================
    SWIGGY-STYLE PRODUCT CARD — .pc-card
    Horizontal: text left, image+ADD right
@@ -5498,4 +5498,3 @@ ul, ol {
     border-top-color: var(--border-default);
   }
 }
->>>>>>> 8839d307a461d933fa72a007c96c2b6fbe871cae

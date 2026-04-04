@@ -19,23 +19,25 @@ export function RestaurantProvider({ children }) {
     }
   }, []);
 
-  // Fetch the last closed session summary (only accessible by OWNER/ADMIN/protected routes)
+  // Only fetch last session for logged-in staff.
+  // MUST check token first — if no token, skip entirely so the 401 interceptor
+  // in api.js never fires and hard-redirects customers away from /order or /menu.
   const fetchLastSession = useCallback(async () => {
+    if (!localStorage.getItem('token')) return;
     try {
       const res = await getLastSessionSummary();
       setLastSession(res.data);
     } catch {
-      // Not logged in or not authorized — silently ignore
+      // Not authorized or network error — ignore silently
     }
   }, []);
 
-  // Fetch on mount
   useEffect(() => {
     fetchStatus();
     fetchLastSession();
   }, [fetchStatus, fetchLastSession]);
 
-  // Poll every 30 seconds
+  // Poll status every 30 seconds
   useEffect(() => {
     const interval = setInterval(fetchStatus, 30000);
     return () => clearInterval(interval);
@@ -44,7 +46,7 @@ export function RestaurantProvider({ children }) {
   const toggleStatus = async () => {
     const res = await toggleApi();
     setStatus(res.data.status);
-    // Refresh session data after toggle (especially useful when closing)
+    // Refresh last session after close so the summary card updates immediately
     fetchLastSession();
     return res.data;
   };
