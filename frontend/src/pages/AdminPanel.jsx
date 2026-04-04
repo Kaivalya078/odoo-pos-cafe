@@ -21,6 +21,7 @@ import SummaryCards from '../components/analytics/SummaryCards';
 import OrdersTable from '../components/analytics/OrdersTable';
 import SessionsTable from '../components/analytics/SessionsTable';
 import TopProducts from '../components/analytics/TopProducts';
+import WarningBanner from '../components/WarningBanner';
 
 export default function AdminPanel() {
   const { status, toggleStatus } = useRestaurant();
@@ -378,51 +379,81 @@ export default function AdminPanel() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {pendingOrders.map((order) => (
               <div key={order._id} style={{
-                background: 'var(--surface)', borderRadius: 8, padding: '12px 16px',
-                border: '1px solid var(--border)', display: 'flex', alignItems: 'flex-start',
-                gap: 16, flexWrap: 'wrap',
+                background: 'var(--bg-surface)',
+                borderRadius: 8,
+                border: order.bookingWarning
+                  ? '1px solid rgba(251,191,36,0.35)'
+                  : '1px solid var(--border-default)',
+                overflow: 'hidden',
               }}>
-                {/* Order info */}
-                <div style={{ flex: 1, minWidth: 200 }}>
-                  <div style={{ fontWeight: 600, marginBottom: 4 }}>
-                    Table {order.table?.tableNumber ?? '—'}
-                    <span style={{ fontWeight: 400, color: 'var(--text-muted)', marginLeft: 8, fontSize: 13 }}>
-                      · {order.customerName}
-                    </span>
-                  </div>
-                  <div style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 6 }}>
-                    {order.items.map((it, i) => (
-                      <span key={i}>
-                        {it.name}{it.variant?.name ? ` (${it.variant.name})` : ''} ×{it.quantity}
-                        {i < order.items.length - 1 ? ', ' : ''}
+                {/* Order info + actions row */}
+                <div style={{
+                  display: 'flex', alignItems: 'flex-start', gap: 16,
+                  flexWrap: 'wrap', padding: '12px 16px',
+                }}>
+                  <div style={{ flex: 1, minWidth: 200 }}>
+                    <div style={{ fontWeight: 600, marginBottom: 4 }}>
+                      Table {order.table?.tableNumber ?? '—'}
+                      <span style={{ fontWeight: 400, color: 'var(--text-muted)', marginLeft: 8, fontSize: 13 }}>
+                        · {order.customerName}
                       </span>
-                    ))}
+                    </div>
+                    <div style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 6 }}>
+                      {order.items.map((it, i) => (
+                        <span key={i}>
+                          {it.name}{it.variant?.name ? ` (${it.variant.name})` : ''} ×{it.quantity}
+                          {i < order.items.length - 1 ? ', ' : ''}
+                        </span>
+                      ))}
+                    </div>
+                    <div style={{ fontWeight: 700, fontSize: 14 }}>₹{order.totalAmount}</div>
                   </div>
-                  <div style={{ fontWeight: 700, fontSize: 14 }}>₹{order.totalAmount}</div>
+
+                  {/* Actions — always visible */}
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                    <button
+                      className="btn btn-primary btn-sm"
+                      onClick={() => handleApprove(order._id)}
+                      disabled={actioning === order._id}
+                      id={`approve-order-${order._id}`}
+                    >
+                      <CheckCircle size={14} />
+                      {actioning === order._id ? '…' : 'Approve'}
+                    </button>
+                    <button
+                      className="btn btn-secondary btn-sm"
+                      onClick={() => handleReject(order._id)}
+                      disabled={actioning === order._id}
+                      id={`reject-order-${order._id}`}
+                      style={{ color: 'var(--error, #e55)' }}
+                    >
+                      <XCircle size={14} />
+                      Reject
+                    </button>
+                  </div>
                 </div>
 
-                {/* Actions */}
-                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                  <button
-                    className="btn btn-primary btn-sm"
-                    onClick={() => handleApprove(order._id)}
-                    disabled={actioning === order._id}
-                    id={`approve-order-${order._id}`}
+                {/* Booking warning — full-width amber strip, shown only when warning exists */}
+                {order.bookingWarning && (
+                  <div
+                    id={`booking-warning-${order._id}`}
+                    role="alert"
+                    style={{
+                      display: 'flex', alignItems: 'flex-start', gap: 10,
+                      padding: '10px 16px',
+                      background: 'rgba(251,191,36,0.08)',
+                      borderTop: '1px solid rgba(251,191,36,0.22)',
+                    }}
                   >
-                    <CheckCircle size={14} />
-                    {actioning === order._id ? '…' : 'Approve'}
-                  </button>
-                  <button
-                    className="btn btn-secondary btn-sm"
-                    onClick={() => handleReject(order._id)}
-                    disabled={actioning === order._id}
-                    id={`reject-order-${order._id}`}
-                    style={{ color: 'var(--error, #e55)' }}
-                  >
-                    <XCircle size={14} />
-                    Reject
-                  </button>
-                </div>
+                    <span style={{ fontSize: 15, flexShrink: 0, lineHeight: 1.4 }}>⚠️</span>
+                    <span style={{
+                      fontSize: 12.5, lineHeight: 1.5,
+                      color: '#fbbf24', fontWeight: 500,
+                    }}>
+                      {order.bookingWarning}
+                    </span>
+                  </div>
+                )}
               </div>
             ))}
           </div>

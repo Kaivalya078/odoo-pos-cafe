@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { getPublicMenu, createOrder } from '../services/orderService';
 import { Coffee, ArrowLeft, CheckCircle } from 'lucide-react';
+import WarningBanner from '../components/WarningBanner';
 import toast from 'react-hot-toast';
 import ProductCard from '../components/ProductCard';
 import Cart from '../components/Cart';
@@ -20,6 +21,7 @@ export default function OrderPage() {
   const [customerName, setCustomerName] = useState('');
   const [placing, setPlacing] = useState(false);
   const [orderSuccess, setOrderSuccess] = useState(null);
+  const [bookingWarning, setBookingWarning] = useState(null);
 
   // Validate tableId
   useEffect(() => {
@@ -122,9 +124,23 @@ export default function OrderPage() {
       });
 
       setOrderSuccess(res.data.data);
+      setBookingWarning(res.data.bookingWarning || null);
       setCart([]);
       setCustomerName('');
       toast.success('Order placed successfully!');
+
+      // Show a secondary toast for booking warning (informational only)
+      if (res.data.bookingWarning) {
+        toast('This table has an upcoming reservation. Staff will assist you.', {
+          icon: '⚠️',
+          duration: 6000,
+          style: {
+            background: '#332b00',
+            border: '1px solid #665500',
+            color: '#fbbf24',
+          },
+        });
+      }
     } catch (err) {
       const msg = err.response?.data?.message || 'Failed to place order';
       toast.error(msg);
@@ -166,6 +182,15 @@ export default function OrderPage() {
               </span>
             </div>
           </div>
+
+          {/* Booking warning — informational only, does NOT block order */}
+          {bookingWarning && (
+            <WarningBanner
+              message="Your order was placed but this table has an upcoming reservation. Staff will assist you."
+              id="order-booking-warning"
+            />
+          )}
+
           <div className="order-success-actions">
             <button
               className="btn btn-primary"

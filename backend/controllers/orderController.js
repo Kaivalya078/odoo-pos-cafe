@@ -4,7 +4,7 @@ const Table = require('../models/Table');
 const Product = require('../models/Product');
 const Restaurant = require('../models/Restaurant');
 const Session = require('../models/Session');
-const { getUpcomingBooking } = require('./bookingController');
+const { getUpcomingBooking, getBookingWarning } = require('./bookingController');
 
 // Calculates item total from DB product data — never trusts frontend prices
 const calculateItemTotal = (dbProduct, variant, addons, quantity) => {
@@ -66,14 +66,11 @@ const createOrder = asyncHandler(async (req, res) => {
     }
   }
 
-  // Block order if a confirmed booking exists within the next 30 minutes
+  // Soft-warn if a booking exists within the next 15 min — order still created
   const upcomingBooking = await getUpcomingBooking(tableId);
-  if (upcomingBooking) {
-    res.status(409);
-    throw new Error(
-      'This table has a reservation within the next 30 minutes. Orders cannot be placed.'
-    );
-  }
+  const bookingWarning = upcomingBooking
+    ? `⚠️ Table ${table.tableNumber} has a reservation at ${new Date(upcomingBooking.startTime).toLocaleTimeString()} (within 15 min). Approve only if order can be completed quickly.`
+    : null;
 
   // Build order items with server-side price calculation
   const orderItems = [];
@@ -116,7 +113,7 @@ const createOrder = asyncHandler(async (req, res) => {
     totalAmount: parseFloat(totalAmount.toFixed(2)),
   });
 
-  res.status(201).json({ success: true, data: order });
+  res.status(201).json({ success: true, data: order, bookingWarning });
 });
 
 // @route   GET /api/orders/pending
@@ -126,7 +123,21 @@ const getPendingOrders = asyncHandler(async (req, res) => {
     .populate('table', 'tableNumber floor status')
     .sort({ createdAt: 1 })
     .lean();
-  res.status(200).json({ success: true, data: orders });
+
+  // Attach booking warning per order so admin can decide before approving
+  const ordersWithWarnings = await Promise.all(
+    orders.map(async (order) => {
+      const warning = await getBookingWarning(order.table._id);
+      return {
+        ...order,
+        bookingWarning: warning
+          ? `⚠️ Table ${order.table.tableNumber} has a reservation at ${new Date(warning.startTime).toLocaleTimeString()} for ${warning.name} (${warning.phone}). Approve only if order can be completed before then, or redirect the customer.`
+          : null,
+      };
+    })
+  );
+
+  res.status(200).json({ success: true, data: ordersWithWarnings });
 });
 
 // @route   PATCH /api/orders/:id/approve

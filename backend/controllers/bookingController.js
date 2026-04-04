@@ -4,8 +4,7 @@ const Table = require('../models/Table');
 const Restaurant = require('../models/Restaurant');
 
 const BOOKING_DURATION_MS = 60 * 60 * 1000;   // 1 hour
-const BUFFER_MS = 30 * 60 * 1000;             // 30 minutes
-const SLOT_INTERVAL_MS = 30 * 60 * 1000;      // 30-minute slots
+const SLOT_INTERVAL_MS = 15 * 60 * 1000;      // 15-minute slots
 
 // Marks bookings EXPIRED if currentTime > startTime + 15min
 const expireStaleBookings = async (tableIds, dateStart, dateEnd) => {
@@ -20,13 +19,11 @@ const expireStaleBookings = async (tableIds, dateStart, dateEnd) => {
   );
 };
 
-// Checks if a candidate [newStart, newEnd] conflicts with any existing booking (including buffer)
-const hasConflict = (newStart, newEnd, existingBookings) => {
-  const bufferedStart = new Date(newStart.getTime() - BUFFER_MS);
+// A slot conflicts if it is within ±1 slot (15 min) of any existing booking
+const hasConflict = (newStart, existingBookings) => {
   return existingBookings.some((b) => {
-    const bBufferedStart = new Date(b.startTime.getTime() - BUFFER_MS);
-    // Two blocked windows overlap if one starts before the other ends
-    return bufferedStart < b.endTime && newEnd > bBufferedStart;
+    const diff = Math.abs(newStart.getTime() - b.startTime.getTime());
+    return diff <= SLOT_INTERVAL_MS;
   });
 };
 
@@ -84,7 +81,7 @@ const getAvailability = asyncHandler(async (req, res) => {
       seats: table.seats,
       slots: slots.map((slotTime) => {
         const slotEnd = new Date(slotTime.getTime() + BOOKING_DURATION_MS);
-        const available = !hasConflict(slotTime, slotEnd, tableBookings);
+        const available = !hasConflict(slotTime, tableBookings);
         return { time: slotTime, available };
       }),
     };
@@ -135,7 +132,7 @@ const createBooking = asyncHandler(async (req, res) => {
     startTime: { $gte: dayStart, $lte: dayEnd },
   }).lean();
 
-  if (hasConflict(start, end, existingBookings)) {
+  if (hasConflict(start, existingBookings)) {
     res.status(409);
     throw new Error(
       'This time slot is not available due to an existing booking or the 30-minute buffer rule'
@@ -192,12 +189,20 @@ const completeBooking = asyncHandler(async (req, res) => {
   res.status(200).json({ success: true, data: booking });
 });
 
-// Exported for use in orderController
+// Exported for use in orderController — soft warning if booking within next 15 min
 const getUpcomingBooking = (tableId) =>
   Booking.findOne({
     table: tableId,
     status: 'BOOKED',
-    startTime: { $gte: new Date(), $lte: new Date(Date.now() + BUFFER_MS) },
+    startTime: { $gte: new Date(), $lte: new Date(Date.now() + SLOT_INTERVAL_MS) },
+  }).lean();
+
+// Exported for getPendingOrders — warns admin of bookings within next 30 min
+const getBookingWarning = (tableId) =>
+  Booking.findOne({
+    table: tableId,
+    status: 'BOOKED',
+    startTime: { $gte: new Date(), $lte: new Date(Date.now() + 30 * 60 * 1000) },
   }).lean();
 
 module.exports = {
@@ -207,4 +212,6 @@ module.exports = {
   cancelBooking,
   completeBooking,
   getUpcomingBooking,
+  getBookingWarning,
 };
+
