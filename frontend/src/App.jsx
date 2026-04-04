@@ -13,6 +13,7 @@ import PublicMenu from './pages/PublicMenu';
 import TableSelection from './pages/TableSelection';
 import OrderPage from './pages/OrderPage';
 import BookingPage from './pages/BookingPage';
+import AnalyticsPage from './pages/AnalyticsPage';
 
 const ROLE_REDIRECT = {
   OWNER: '/owner',
@@ -71,6 +72,11 @@ export default function App() {
               <Route path="/owner" element={
                 <ProtectedRoute allowedRoles={['OWNER']}>
                   <OwnerPanel />
+                </ProtectedRoute>
+              } />
+              <Route path="/analytics" element={
+                <ProtectedRoute allowedRoles={['OWNER']}>
+                  <AnalyticsPage />
                 </ProtectedRoute>
               } />
               <Route path="/admin" element={

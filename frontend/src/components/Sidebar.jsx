@@ -8,10 +8,12 @@ import {
   LogOut,
   UtensilsCrossed,
   Coffee,
+  BarChart3,
 } from 'lucide-react';
 
 const ROLE_NAV = {
   OWNER: [
+    { to: '/analytics', label: 'Analytics', icon: BarChart3 },
     { to: '/owner', label: 'Owner Panel', icon: LayoutDashboard },
     { to: '/admin', label: 'Admin Panel', icon: Settings },
     { to: '/kitchen', label: 'Kitchen', icon: ChefHat },

@@ -133,4 +133,96 @@ const getTopProducts = asyncHandler(async (req, res) => {
   res.status(200).json({ success: true, data: topProducts });
 });
 
-module.exports = { getOrderHistory, getSessionHistory, getRevenueSummary, getTopProducts };
+
+// @route   GET /api/admin/reports/category-revenue
+// @access  Private (OWNER)
+const getCategoryRevenue = asyncHandler(async (req, res) => {
+  const data = await Order.aggregate([
+    { $match: { paymentStatus: 'PAID' } },
+    { $unwind: '$items' },
+    {
+      $group: {
+        _id: '$items.category',
+        revenue: { $sum: '$items.itemTotal' },
+      },
+    },
+    {
+      $project: {
+        _id: 0,
+        category: { $ifNull: ['$_id', 'Uncategorised'] },
+        revenue: { $round: ['$revenue', 2] },
+      },
+    },
+    { $sort: { revenue: -1 } },
+  ]);
+  res.status(200).json({ success: true, data });
+});
+
+// @route   GET /api/admin/reports/payment-breakdown
+// @access  Private (OWNER)
+const getPaymentBreakdown = asyncHandler(async (req, res) => {
+  const data = await Order.aggregate([
+    { $match: { paymentStatus: 'PAID' } },
+    { $group: { _id: '$paymentMethod', count: { $sum: 1 } } },
+    { $project: { _id: 0, method: '$_id', count: 1 } },
+    { $sort: { count: -1 } },
+  ]);
+  res.status(200).json({ success: true, data });
+});
+
+// @route   GET /api/admin/reports/hourly-revenue
+// @access  Private (OWNER)
+const getHourlyRevenue = asyncHandler(async (req, res) => {
+  const data = await Order.aggregate([
+    { $match: { paymentStatus: 'PAID' } },
+    {
+      $group: {
+        _id: { $hour: '$createdAt' },
+        revenue: { $sum: '$totalAmount' },
+      },
+    },
+    { $project: { _id: 0, hour: '$_id', revenue: { $round: ['$revenue', 2] } } },
+    { $sort: { hour: 1 } },
+  ]);
+  res.status(200).json({ success: true, data });
+});
+
+// @route   GET /api/admin/reports/insights
+// @access  Private (OWNER)
+const getInsights = asyncHandler(async (req, res) => {
+  const [hourlyRaw, topRaw] = await Promise.all([
+    Order.aggregate([
+      { $match: { paymentStatus: 'PAID' } },
+      { $group: { _id: { $hour: '$createdAt' }, revenue: { $sum: '$totalAmount' } } },
+      { $sort: { revenue: -1 } },
+      { $limit: 1 },
+    ]),
+    Order.aggregate([
+      { $match: { paymentStatus: 'PAID' } },
+      { $unwind: '$items' },
+      { $group: { _id: '$items.name', qty: { $sum: '$items.quantity' } } },
+      { $sort: { qty: -1 } },
+      { $limit: 1 },
+    ]),
+  ]);
+
+  res.status(200).json({
+    success: true,
+    data: {
+      bestHour: hourlyRaw[0]?._id ?? null,
+      bestProduct: topRaw[0]?._id ?? null,
+    },
+  });
+});
+
+module.exports = {
+  getOrderHistory,
+  getSessionHistory,
+  getRevenueSummary,
+  getTopProducts,
+  getCategoryRevenue,
+  getPaymentBreakdown,
+  getHourlyRevenue,
+  getInsights,
+};
+
