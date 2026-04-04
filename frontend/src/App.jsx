@@ -54,9 +54,10 @@ export default function App() {
           />
 
           <Routes>
-            {/* Public */}
+            {/* Public — accessible without login */}
             <Route path="/login" element={<LoginPage />} />
             <Route path="/menu" element={<PublicMenu />} />
+            <Route path="/tables" element={<TableSelection />} />
             <Route path="/order" element={<OrderPage />} />
 
             {/* Protected (with sidebar layout) */}
@@ -83,11 +84,6 @@ export default function App() {
               <Route path="/cashier" element={
                 <ProtectedRoute allowedRoles={['CASHIER']}>
                   <CashierScreen />
-                </ProtectedRoute>
-              } />
-              <Route path="/tables" element={
-                <ProtectedRoute allowedRoles={['OWNER', 'ADMIN']}>
-                  <TableSelection />
                 </ProtectedRoute>
               } />
             </Route>

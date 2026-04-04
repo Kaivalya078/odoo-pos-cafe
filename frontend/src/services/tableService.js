@@ -1,7 +1,10 @@
+import axios from 'axios';
 import api from './api';
 
-// GET /api/tables
-// Response: { success, data: [{ _id, tableNumber, floor: { _id, name }, seats, status }] }
+// GET /api/tables — no auth required (public, for customer table selection)
+export const getPublicTables = () => axios.get('/api/tables');
+
+// GET /api/tables — authenticated (for admin/owner)
 export const getAllTables = () => api.get('/tables');
 
 // GET /api/tables/floor/:floorId

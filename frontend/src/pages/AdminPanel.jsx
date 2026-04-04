@@ -1,9 +1,10 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRestaurant } from '../context/RestaurantContext';
 import { getAllFloors } from '../services/floorService';
 import { getTablesByFloor } from '../services/tableService';
 import { getAllProducts, createProduct, updateProduct, deleteProduct } from '../services/productService';
-import { Settings, Package } from 'lucide-react';
+import { getPendingOrders, approveOrder, rejectOrder } from '../services/orderService';
+import { Settings, Package, ClipboardList, CheckCircle, XCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import FloorList from '../components/FloorList';
 import TableGrid from '../components/TableGrid';
@@ -14,6 +15,11 @@ import ProductList from '../components/ProductList';
 export default function AdminPanel() {
   const { status, toggleStatus } = useRestaurant();
   const [toggling, setToggling] = useState(false);
+
+  // Pending orders state
+  const [pendingOrders, setPendingOrders] = useState([]);
+  const [actioning, setActioning] = useState(null);
+  const pollRef = useRef(null);
 
   // Floor state
   const [floors, setFloors] = useState([]);
@@ -27,6 +33,16 @@ export default function AdminPanel() {
   const [products, setProducts] = useState([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
   const [editingProduct, setEditingProduct] = useState(null);
+
+  // Fetch pending orders
+  const fetchPendingOrders = useCallback(async () => {
+    try {
+      const res = await getPendingOrders();
+      setPendingOrders(res.data.data);
+    } catch {
+      // silently fail on poll errors
+    }
+  }, []);
 
   // Fetch all floors
   const fetchFloors = useCallback(async () => {
@@ -67,7 +83,11 @@ export default function AdminPanel() {
   useEffect(() => {
     fetchFloors();
     fetchProducts();
-  }, [fetchFloors, fetchProducts]);
+    fetchPendingOrders();
+    // Poll every 10s for new orders
+    pollRef.current = setInterval(fetchPendingOrders, 10000);
+    return () => clearInterval(pollRef.current);
+  }, [fetchFloors, fetchProducts, fetchPendingOrders]);
 
   // Refetch tables when selected floor changes
   useEffect(() => {
@@ -77,6 +97,34 @@ export default function AdminPanel() {
       setTables([]);
     }
   }, [selectedFloor, fetchTables]);
+
+  // Order approve / reject
+  const handleApprove = async (orderId) => {
+    setActioning(orderId);
+    try {
+      await approveOrder(orderId);
+      toast.success('Order approved — table marked occupied');
+      fetchPendingOrders();
+      if (selectedFloor) fetchTables(selectedFloor._id);
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to approve order');
+    } finally {
+      setActioning(null);
+    }
+  };
+
+  const handleReject = async (orderId) => {
+    setActioning(orderId);
+    try {
+      await rejectOrder(orderId);
+      toast.success('Order rejected');
+      fetchPendingOrders();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to reject order');
+    } finally {
+      setActioning(null);
+    }
+  };
 
   const handleToggle = async () => {
     setToggling(true);
@@ -151,6 +199,76 @@ export default function AdminPanel() {
       <div className="page-header">
         <h1 className="page-title">Admin Panel</h1>
         <p className="page-subtitle">Manage restaurant status, floors, tables and products</p>
+      </div>
+
+      {/* ── Pending Orders ──────────────────────────────────────────────────── */}
+      <div className="card">
+        <div className="card-title">
+          <ClipboardList size={16} />
+          Pending Orders
+          {pendingOrders.length > 0 && (
+            <span style={{
+              marginLeft: 8, background: 'var(--accent)', color: '#fff',
+              borderRadius: 999, fontSize: 11, padding: '1px 8px', fontWeight: 700,
+            }}>{pendingOrders.length}</span>
+          )}
+        </div>
+
+        {pendingOrders.length === 0 ? (
+          <p style={{ color: 'var(--text-muted)', fontSize: 14 }}>No pending orders right now.</p>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {pendingOrders.map((order) => (
+              <div key={order._id} style={{
+                background: 'var(--surface)', borderRadius: 8, padding: '12px 16px',
+                border: '1px solid var(--border)', display: 'flex', alignItems: 'flex-start',
+                gap: 16, flexWrap: 'wrap',
+              }}>
+                {/* Order info */}
+                <div style={{ flex: 1, minWidth: 200 }}>
+                  <div style={{ fontWeight: 600, marginBottom: 4 }}>
+                    Table {order.table?.tableNumber ?? '—'}
+                    <span style={{ fontWeight: 400, color: 'var(--text-muted)', marginLeft: 8, fontSize: 13 }}>
+                      · {order.customerName}
+                    </span>
+                  </div>
+                  <div style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 6 }}>
+                    {order.items.map((it, i) => (
+                      <span key={i}>
+                        {it.name}{it.variant?.name ? ` (${it.variant.name})` : ''} ×{it.quantity}
+                        {i < order.items.length - 1 ? ', ' : ''}
+                      </span>
+                    ))}
+                  </div>
+                  <div style={{ fontWeight: 700, fontSize: 14 }}>₹{order.totalAmount}</div>
+                </div>
+
+                {/* Actions */}
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                  <button
+                    className="btn btn-primary btn-sm"
+                    onClick={() => handleApprove(order._id)}
+                    disabled={actioning === order._id}
+                    id={`approve-order-${order._id}`}
+                  >
+                    <CheckCircle size={14} />
+                    {actioning === order._id ? '…' : 'Approve'}
+                  </button>
+                  <button
+                    className="btn btn-secondary btn-sm"
+                    onClick={() => handleReject(order._id)}
+                    disabled={actioning === order._id}
+                    id={`reject-order-${order._id}`}
+                    style={{ color: 'var(--error, #e55)' }}
+                  >
+                    <XCircle size={14} />
+                    Reject
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Restaurant Status */}

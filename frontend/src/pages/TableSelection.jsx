@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getAllTablesAuth } from '../services/orderService';
+import { getPublicTables } from '../services/tableService';
 import { Coffee, Users, ArrowRight } from 'lucide-react';
 
 export default function TableSelection() {
@@ -12,7 +12,7 @@ export default function TableSelection() {
   useEffect(() => {
     const fetchTables = async () => {
       try {
-        const res = await getAllTablesAuth();
+        const res = await getPublicTables();
         setTables(res.data.data);
       } catch (err) {
         setError(err.response?.data?.message || 'Failed to load tables');
