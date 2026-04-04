@@ -1,6 +1,8 @@
 const express = require('express');
 const { notFound, errorHandler } = require('./middleware/errorMiddleware');
 const authRoutes = require('./routes/authRoutes');
+const restaurantRoutes = require('./routes/restaurantRoutes');
+const userRoutes = require('./routes/userRoutes');
 
 const app = express();
 
@@ -15,6 +17,8 @@ app.get('/api/health', (req, res) => {
 
 // API routes
 app.use('/api/auth', authRoutes);
+app.use('/api/restaurant', restaurantRoutes);
+app.use('/api/users', userRoutes);
 
 // 404 + error handlers (must be last)
 app.use(notFound);
