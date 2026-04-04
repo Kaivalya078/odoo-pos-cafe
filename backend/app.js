@@ -5,6 +5,8 @@ const restaurantRoutes = require('./routes/restaurantRoutes');
 const userRoutes = require('./routes/userRoutes');
 const floorRoutes = require('./routes/floorRoutes');
 const tableRoutes = require('./routes/tableRoutes');
+const productRoutes = require('./routes/productRoutes');
+const { getMenu } = require('./controllers/productController');
 
 const app = express();
 
@@ -23,6 +25,8 @@ app.use('/api/restaurant', restaurantRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/floors', floorRoutes);
 app.use('/api/tables', tableRoutes);
+app.use('/api/products', productRoutes);
+app.get('/api/menu', getMenu); // public — no router-level auth middleware
 
 // 404 + error handlers (must be last)
 app.use(notFound);

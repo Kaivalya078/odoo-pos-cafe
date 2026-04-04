@@ -2,11 +2,14 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRestaurant } from '../context/RestaurantContext';
 import { getAllFloors } from '../services/floorService';
 import { getTablesByFloor } from '../services/tableService';
-import { Settings } from 'lucide-react';
+import { getAllProducts, createProduct, updateProduct, deleteProduct } from '../services/productService';
+import { Settings, Package } from 'lucide-react';
 import toast from 'react-hot-toast';
 import FloorList from '../components/FloorList';
 import TableGrid from '../components/TableGrid';
 import AddTableForm from '../components/AddTableForm';
+import AddProductForm from '../components/AddProductForm';
+import ProductList from '../components/ProductList';
 
 export default function AdminPanel() {
   const { status, toggleStatus } = useRestaurant();
@@ -19,6 +22,11 @@ export default function AdminPanel() {
   // Table state
   const [tables, setTables] = useState([]);
   const [loadingTables, setLoadingTables] = useState(false);
+
+  // Product state
+  const [products, setProducts] = useState([]);
+  const [loadingProducts, setLoadingProducts] = useState(true);
+  const [editingProduct, setEditingProduct] = useState(null);
 
   // Fetch all floors
   const fetchFloors = useCallback(async () => {
@@ -43,9 +51,23 @@ export default function AdminPanel() {
     }
   }, []);
 
+  // Fetch all products
+  const fetchProducts = useCallback(async () => {
+    setLoadingProducts(true);
+    try {
+      const res = await getAllProducts();
+      setProducts(res.data.data);
+    } catch (err) {
+      toast.error('Failed to load products');
+    } finally {
+      setLoadingProducts(false);
+    }
+  }, []);
+
   useEffect(() => {
     fetchFloors();
-  }, [fetchFloors]);
+    fetchProducts();
+  }, [fetchFloors, fetchProducts]);
 
   // Refetch tables when selected floor changes
   useEffect(() => {
@@ -73,7 +95,7 @@ export default function AdminPanel() {
   };
 
   const handleTableCreated = () => {
-    fetchFloors(); // refresh in case floor selection needed
+    fetchFloors();
     if (selectedFloor) {
       fetchTables(selectedFloor._id);
     }
@@ -85,11 +107,50 @@ export default function AdminPanel() {
     }
   };
 
+  // --- Product handlers ---
+  const handleProductSubmit = async (payload, productId) => {
+    try {
+      if (productId) {
+        await updateProduct(productId, payload);
+        toast.success('Product updated');
+        setEditingProduct(null);
+      } else {
+        await createProduct(payload);
+        toast.success('Product created');
+      }
+      fetchProducts();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to save product');
+    }
+  };
+
+  const handleProductEdit = (product) => {
+    setEditingProduct(product);
+    // Scroll to form
+    document.getElementById('product-name')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  };
+
+  const handleProductDelete = async (productId) => {
+    if (!window.confirm('Delete this product? This cannot be undone.')) return;
+    try {
+      await deleteProduct(productId);
+      toast.success('Product deleted');
+      fetchProducts();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to delete product');
+    }
+  };
+
+  // Product stats
+  const categories = [...new Set(products.map((p) => p.category))];
+  const availableCount = products.filter((p) => p.availability === 'AVAILABLE').length;
+  const unavailableCount = products.filter((p) => p.availability === 'UNAVAILABLE').length;
+
   return (
     <div>
       <div className="page-header">
         <h1 className="page-title">Admin Panel</h1>
-        <p className="page-subtitle">Manage restaurant status, floors and tables</p>
+        <p className="page-subtitle">Manage restaurant status, floors, tables and products</p>
       </div>
 
       {/* Restaurant Status */}
@@ -138,6 +199,52 @@ export default function AdminPanel() {
         loading={loadingTables}
         onTableDeleted={handleTableDeleted}
         onTableUpdated={handleTableDeleted}
+      />
+
+      {/* ── Product Management Section ──────────────────────────────────────── */}
+      <div className="section-divider" />
+
+      <div className="page-header">
+        <h2 className="page-title" style={{ fontSize: 18 }}>
+          <Package size={18} style={{ verticalAlign: 'middle', marginRight: 8 }} />
+          Product Management
+        </h2>
+        <p className="page-subtitle">Create, edit and manage your menu products</p>
+      </div>
+
+      {/* Product Stats */}
+      <div className="stat-row">
+        <div className="stat-item">
+          <div className="stat-value">{products.length}</div>
+          <div className="stat-label">Total Products</div>
+        </div>
+        <div className="stat-item">
+          <div className="stat-value">{categories.length}</div>
+          <div className="stat-label">Categories</div>
+        </div>
+        <div className="stat-item">
+          <div className="stat-value">{availableCount}</div>
+          <div className="stat-label">Available</div>
+        </div>
+        <div className="stat-item">
+          <div className="stat-value">{unavailableCount}</div>
+          <div className="stat-label">Unavailable</div>
+        </div>
+      </div>
+
+      {/* Add / Edit Product Form */}
+      <AddProductForm
+        onSubmit={handleProductSubmit}
+        editingProduct={editingProduct}
+        onCancelEdit={() => setEditingProduct(null)}
+      />
+
+      {/* Product List */}
+      <ProductList
+        products={products}
+        loading={loadingProducts}
+        onEdit={handleProductEdit}
+        onDelete={handleProductDelete}
       />
     </div>
   );
