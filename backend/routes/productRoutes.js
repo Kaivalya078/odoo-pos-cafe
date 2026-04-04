@@ -5,19 +5,18 @@ const {
   updateProduct,
   deleteProduct,
   toggleAvailability,
-  getMenu,
+  getKitchenProducts,
 } = require('../controllers/productController');
 const { protect, authorizeRoles } = require('../middleware/authMiddleware');
 
 const router = express.Router();
 
-// Public menu — no auth
-router.get('/menu', getMenu);
-
-// Kitchen: toggle availability only
+// ── KITCHEN routes ────────────────────────────────────────────────────────────
+// Declared BEFORE the OWNER/ADMIN router.use() guard below
+router.get('/kitchen', protect, authorizeRoles('KITCHEN'), getKitchenProducts);
 router.patch('/:id/availability', protect, authorizeRoles('KITCHEN', 'OWNER'), toggleAvailability);
 
-// OWNER / ADMIN: full CRUD
+// ── OWNER / ADMIN routes ──────────────────────────────────────────────────────
 router.use(protect, authorizeRoles('OWNER', 'ADMIN'));
 router.get('/', getAllProducts);
 router.post('/', createProduct);

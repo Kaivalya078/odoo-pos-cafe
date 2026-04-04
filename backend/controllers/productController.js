@@ -112,4 +112,12 @@ const getMenu = asyncHandler(async (req, res) => {
   res.status(200).json({ success: true, data: menu });
 });
 
-module.exports = { createProduct, getAllProducts, updateProduct, deleteProduct, toggleAvailability, getMenu };
+// @route   GET /api/products/kitchen
+// @access  Private (KITCHEN only)
+const getKitchenProducts = asyncHandler(async (req, res) => {
+  const products = await Product.find().sort({ category: 1, name: 1 }).lean();
+  res.status(200).json({ success: true, data: products });
+});
+
+module.exports = { createProduct, getAllProducts, updateProduct, deleteProduct, toggleAvailability, getMenu, getKitchenProducts };
+
