@@ -6,7 +6,7 @@ import PaymentPanel from '../components/cashier/PaymentPanel';
 import { CreditCard, RefreshCw } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-const POLL_INTERVAL = 8000;
+const POLL_INTERVAL = 10000; // 10 s — system-wide real-time standard
 
 export default function CashierScreen() {
   const [sessions, setSessions] = useState([]);

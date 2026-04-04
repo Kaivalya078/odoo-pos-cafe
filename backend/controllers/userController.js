@@ -96,6 +96,13 @@ const getOwnerDashboard = asyncHandler(async (req, res) => {
   });
 });
 
+// @route   GET /api/users/upi
+// @access  Private (OWNER)
+const getUpiId = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user._id).select('upiId').lean();
+  res.status(200).json({ success: true, data: { upiId: user?.upiId || null } });
+});
+
 // @route   PATCH /api/users/upi
 // @access  Private (OWNER)
 const updateUpiId = asyncHandler(async (req, res) => {
@@ -115,5 +122,5 @@ const updateUpiId = asyncHandler(async (req, res) => {
   res.status(200).json({ success: true, data: { upiId: user.upiId } });
 });
 
-module.exports = { getAllUsers, createUser, updateUserRole, getOwnerDashboard, updateUpiId };
+module.exports = { getAllUsers, createUser, updateUserRole, getOwnerDashboard, getUpiId, updateUpiId };
 

@@ -9,6 +9,12 @@ export const getAllUsers = () => api.get('/users');
 // Response: { success, data: { id, name, email, role } }
 export const createUser = (data) => api.post('/users', data);
 
+// PATCH /api/users/upi
+export const updateUpi = (upiId) => api.patch('/users/upi', { upiId });
+
+// GET /api/users/upi
+export const getUpi = () => api.get('/users/upi');
+
 // PATCH /api/users/:id/role
 // Body: { role }
 // Response: { success, data: user }

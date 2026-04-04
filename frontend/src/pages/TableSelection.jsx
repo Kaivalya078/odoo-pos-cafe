@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { getPublicTables } from '../services/tableService';
 import { Coffee, Users, ArrowRight, CalendarDays, MapPin } from 'lucide-react';
@@ -10,19 +10,25 @@ export default function TableSelection() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
+  const pollRef = useRef(null);
 
   useEffect(() => {
-    const fetchTables = async () => {
+    const fetchTables = async (silent = false) => {
+      if (!silent) setLoading(true);
       try {
         const res = await getPublicTables();
         setTables(res.data.data);
+        if (!silent) setError(null);
       } catch (err) {
-        setError(err.response?.data?.message || 'Failed to load tables');
+        if (!silent) setError(err.response?.data?.message || 'Failed to load tables');
       } finally {
-        setLoading(false);
+        if (!silent) setLoading(false);
       }
     };
     fetchTables();
+    // Poll every 10 s — table statuses change as orders/payments happen
+    pollRef.current = setInterval(() => fetchTables(true), 10_000);
+    return () => clearInterval(pollRef.current);
   }, []);
 
   const freeTables = tables.filter((t) => t.status === 'FREE');

@@ -38,7 +38,9 @@ export default function AdminPanel() {
 
   const [pendingOrders, setPendingOrders] = useState([]);
   const [actioning, setActioning] = useState(null);
-  const pollRef = useRef(null);
+  const ordersIntervalRef = useRef(null);
+  const productsIntervalRef = useRef(null);
+  const bookingsIntervalRef = useRef(null);
 
   const [floors, setFloors] = useState([]);
   const [selectedFloor, setSelectedFloor] = useState(null);
@@ -153,10 +155,26 @@ export default function AdminPanel() {
   };
 
   useEffect(() => {
-    fetchFloors(); fetchProducts(); fetchPendingOrders();
-    pollRef.current = setInterval(fetchPendingOrders, 10000);
-    fetchSummary(); fetchOrderHistory(); fetchSessionHistory(); fetchTopProducts(); fetchBookings();
-    return () => clearInterval(pollRef.current);
+    // Initial load of all data
+    fetchFloors();
+    fetchProducts();
+    fetchPendingOrders();
+    fetchBookings();
+    fetchSummary();
+    fetchOrderHistory();
+    fetchSessionHistory();
+    fetchTopProducts();
+
+    // Poll the live-data endpoints every 10 s
+    ordersIntervalRef.current   = setInterval(fetchPendingOrders, 10_000);
+    productsIntervalRef.current = setInterval(fetchProducts,      10_000);
+    bookingsIntervalRef.current = setInterval(fetchBookings,      10_000);
+
+    return () => {
+      clearInterval(ordersIntervalRef.current);
+      clearInterval(productsIntervalRef.current);
+      clearInterval(bookingsIntervalRef.current);
+    };
   }, [fetchFloors, fetchProducts, fetchPendingOrders, fetchSummary, fetchOrderHistory, fetchSessionHistory, fetchTopProducts, fetchBookings]);
 
   useEffect(() => {

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { getPublicMenu } from '../services/productService';
 import { Coffee, UtensilsCrossed, CalendarDays, ArrowRight } from 'lucide-react';
@@ -12,23 +12,31 @@ const CATEGORY_COLORS = [
   { bg: '#1e2e3a', accent: '#bae6fd', emoji: '🍛' },
 ];
 
+const MENU_POLL_INTERVAL = 10_000; // 10 seconds — real-time availability sync
+
 export default function PublicMenu() {
   const [menu, setMenu] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const pollRef = useRef(null);
 
   useEffect(() => {
-    const fetchMenu = async () => {
+    const fetchMenu = async (silent = false) => {
+      if (!silent) setLoading(true);
       try {
         const res = await getPublicMenu();
         setMenu(res.data.data);
+        if (!silent) setError(null);
       } catch {
-        setError('Unable to load menu. Please try again later.');
+        if (!silent) setError('Unable to load menu. Please try again later.');
       } finally {
-        setLoading(false);
+        if (!silent) setLoading(false);
       }
     };
     fetchMenu();
+    // Poll silently so customers see availability changes in real-time
+    pollRef.current = setInterval(() => fetchMenu(true), MENU_POLL_INTERVAL);
+    return () => clearInterval(pollRef.current);
   }, []);
 
   const categories = Object.keys(menu).sort();

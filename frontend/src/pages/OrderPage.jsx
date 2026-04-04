@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { getPublicMenu, createOrder } from '../services/orderService';
 import { Coffee, ArrowLeft, CheckCircle, ShoppingBag } from 'lucide-react';
@@ -30,23 +30,32 @@ export default function OrderPage() {
     }
   }, [tableId]);
 
-  const fetchMenu = useCallback(async () => {
+  const menuPollRef = useRef(null);
+
+  const fetchMenu = useCallback(async (silent = false) => {
     if (!tableId) return;
-    setLoading(true);
+    if (!silent) setLoading(true);
     try {
       const res = await getPublicMenu();
       const data = res.data.data;
       setMenu(data);
-      const cats = Object.keys(data).sort();
-      if (cats.length > 0) setActiveCategory(cats[0]);
+      if (!silent) {
+        const cats = Object.keys(data).sort();
+        if (cats.length > 0) setActiveCategory(cats[0]);
+      }
     } catch {
-      setError('Failed to load menu. Please try again.');
+      if (!silent) setError('Failed to load menu. Please try again.');
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, [tableId]);
 
-  useEffect(() => { fetchMenu(); }, [fetchMenu]);
+  useEffect(() => {
+    fetchMenu();
+    // Poll menu every 30 s so availability changes from kitchen reflect here
+    menuPollRef.current = setInterval(() => fetchMenu(true), 10_000);
+    return () => clearInterval(menuPollRef.current);
+  }, [fetchMenu]);
 
   const addToCart = (item) => {
     setCart((prev) => {

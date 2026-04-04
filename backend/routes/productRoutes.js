@@ -13,7 +13,7 @@ const router = express.Router();
 
 // ── KITCHEN routes ────────────────────────────────────────────────────────────
 // Declared BEFORE the OWNER/ADMIN router.use() guard below
-router.get('/kitchen', protect, authorizeRoles('KITCHEN'), getKitchenProducts);
+router.get('/kitchen', protect, authorizeRoles('KITCHEN', 'OWNER'), getKitchenProducts);
 router.patch('/:id/availability', protect, authorizeRoles('KITCHEN', 'OWNER'), toggleAvailability);
 
 // ── OWNER / ADMIN routes ──────────────────────────────────────────────────────

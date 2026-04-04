@@ -2421,8 +2421,342 @@ ul, ol {
 }
 
 /* ================================================================
+   PHASE 6b — KITCHEN PRODUCT AVAILABILITY PANEL
+   ================================================================ */
+
+/* ===== SCREEN-LEVEL TAB SWITCHER ===== */
+.kd-screen-tabs {
+  display: flex;
+  gap: var(--space-xs);
+  padding-bottom: var(--space-sm);
+  border-bottom: 2px solid var(--border-default);
+}
+
+.kd-screen-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 20px;
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: transparent;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.kd-screen-tab:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.kd-screen-tab--active {
+  background: var(--accent-muted);
+  color: var(--accent);
+  border-color: rgba(124, 127, 242, 0.25);
+}
+
+/* Availability dot used inside the tab */
+.kd-avail-summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+/* ===== AVAILABILITY PANEL ===== */
+.kd-avail-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.kd-avail-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-md);
+  flex-wrap: wrap;
+  padding: var(--space-md);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+}
+
+.kd-avail-header-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.kd-avail-subtitle {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.kd-avail-stats {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  margin-top: 4px;
+}
+
+.kd-stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: 999px;
+}
+
+.kd-stat--on {
+  background: var(--status-open-bg);
+  color: var(--status-open);
+}
+
+.kd-stat--off {
+  background: var(--status-closed-bg);
+  color: var(--status-closed);
+}
+
+.kd-avail-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+/* ===== AVAILABILITY DOT ===== */
+.kd-avail-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.kd-avail-dot--on {
+  background: var(--status-open);
+  box-shadow: 0 0 6px rgba(34, 197, 94, 0.5);
+}
+
+.kd-avail-dot--off {
+  background: var(--status-closed);
+  box-shadow: 0 0 6px rgba(239, 68, 68, 0.4);
+}
+
+/* ===== CATEGORY GROUPS ===== */
+.kd-avail-categories {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.kd-avail-category {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.kd-avail-category-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px var(--space-md);
+  background: var(--bg-elevated);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.kd-avail-category-name {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+  color: var(--text-secondary);
+}
+
+.kd-avail-category-count {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+/* ===== PRODUCT ROWS ===== */
+.kd-avail-products {
+  display: flex;
+  flex-direction: column;
+}
+
+.kd-avail-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  padding: 14px var(--space-md);
+  border-bottom: 1px solid var(--border-subtle);
+  transition: background var(--transition-fast), opacity var(--transition-fast);
+}
+
+.kd-avail-row:last-child {
+  border-bottom: none;
+}
+
+.kd-avail-row:hover {
+  background: var(--bg-hover);
+}
+
+.kd-avail-row--off {
+  opacity: 0.55;
+}
+
+.kd-avail-row--off:hover {
+  opacity: 0.75;
+}
+
+.kd-avail-row--loading {
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+.kd-avail-product-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  flex: 1;
+}
+
+.kd-avail-product-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.kd-avail-row--off .kd-avail-product-name {
+  text-decoration: line-through;
+  color: var(--text-muted);
+}
+
+.kd-avail-product-meta {
+  font-size: 11px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.kd-avail-row-right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  flex-shrink: 0;
+}
+
+.kd-avail-label {
+  font-size: 12px;
+  font-weight: 600;
+  width: 80px;
+  text-align: right;
+  transition: color var(--transition-fast);
+}
+
+.kd-avail-label--on {
+  color: var(--status-open);
+}
+
+.kd-avail-label--off {
+  color: var(--status-closed);
+}
+
+/* ===== TOGGLE SWITCH ===== */
+.kd-toggle {
+  position: relative;
+  width: 48px;
+  height: 26px;
+  border-radius: 999px;
+  border: none;
+  cursor: pointer;
+  transition: background var(--transition-normal), box-shadow var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.kd-toggle--on {
+  background: var(--status-open);
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.2);
+}
+
+.kd-toggle--off {
+  background: var(--bg-elevated);
+  box-shadow: 0 0 0 1px var(--border-default);
+}
+
+.kd-toggle:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.kd-toggle__thumb {
+  position: absolute;
+  top: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+  transition: left var(--transition-normal);
+}
+
+.kd-toggle--on .kd-toggle__thumb {
+  left: calc(100% - 23px);
+}
+
+.kd-toggle--off .kd-toggle__thumb {
+  left: 3px;
+}
+
+/* ===== RESPONSIVE — Phase 6b ===== */
+@media (max-width: 768px) {
+  .kd-screen-tabs {
+    gap: var(--space-xs);
+  }
+
+  .kd-screen-tab {
+    padding: 8px 14px;
+    font-size: 12px;
+  }
+
+  .kd-avail-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .kd-avail-actions {
+    flex-wrap: wrap;
+  }
+
+  .kd-avail-label {
+    display: none;
+  }
+
+  .kd-avail-row {
+    padding: 12px var(--space-sm);
+  }
+}
+
+/* ================================================================
    PHASE 7 — CASHIER + PAYMENT + SESSION MANAGEMENT
    ================================================================ */
+
 
 /* ===== PAGE ===== */
 .cs-page {
@@ -2915,23 +3249,25 @@ ul, ol {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: var(--space-sm);
+  gap: 6px;
   padding: var(--space-lg) var(--space-md);
   background: var(--bg-surface);
-  border: 1px solid var(--border-default);
+  border: 1.5px solid var(--border-default);
   border-radius: var(--radius-lg);
   color: var(--text-secondary);
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
   transition: all var(--transition-normal);
+  box-shadow: var(--card-shadow);
 }
 
 .cs-payment__method-btn:hover:not(:disabled) {
   border-color: var(--method-color, var(--accent));
   color: var(--method-color, var(--accent));
-  background: rgba(124, 127, 242, 0.05);
+  background: var(--method-bg, var(--accent-muted));
   transform: translateY(-2px);
+  box-shadow: var(--card-shadow-hover);
 }
 
 .cs-payment__method-btn:active:not(:disabled) {

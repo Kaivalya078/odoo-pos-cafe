@@ -1,8 +1,8 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useRestaurant } from '../context/RestaurantContext';
-import { getAllUsers, createUser, updateUserRole } from '../services/userService';
-import { Users, UserPlus, Crown } from 'lucide-react';
+import { getAllUsers, createUser, updateUserRole, updateUpi, getUpi } from '../services/userService';
+import { Users, UserPlus, Crown, TrendingUp, Smartphone, CheckCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const VALID_ROLES = ['OWNER', 'ADMIN', 'KITCHEN', 'CASHIER'];
@@ -22,6 +22,11 @@ export default function OwnerPanel() {
   const [formRole, setFormRole] = useState('CASHIER');
   const [creating, setCreating] = useState(false);
 
+  // UPI settings
+  const [upiInput, setUpiInput] = useState('');
+  const [savedUpi, setSavedUpi] = useState(null);
+  const [savingUpi, setSavingUpi] = useState(false);
+
   const fetchUsers = useCallback(async () => {
     try {
       const res = await getAllUsers();
@@ -33,8 +38,18 @@ export default function OwnerPanel() {
     }
   }, []);
 
+  const pollRef = useRef(null);
+
   useEffect(() => {
     fetchUsers();
+    // Poll every 10 s — reflect role changes and new users in real-time
+    pollRef.current = setInterval(fetchUsers, 10_000);
+    // Fetch current UPI ID from backend
+    getUpi().then((res) => {
+      const id = res.data?.data?.upiId;
+      if (id) { setUpiInput(id); setSavedUpi(id); }
+    }).catch(() => {});
+    return () => clearInterval(pollRef.current);
   }, [fetchUsers]);
 
   // --- Restaurant toggle ---
@@ -85,6 +100,22 @@ export default function OwnerPanel() {
     }
   };
 
+  // --- Save UPI ID ---
+  const handleSaveUpi = async (e) => {
+    e.preventDefault();
+    if (!upiInput.trim()) { toast.error('Please enter a UPI ID'); return; }
+    setSavingUpi(true);
+    try {
+      await updateUpi(upiInput.trim());
+      setSavedUpi(upiInput.trim());
+      toast.success('UPI ID saved! QR payments are now enabled for cashiers.');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to save UPI ID');
+    } finally {
+      setSavingUpi(false);
+    }
+  };
+
   return (
     <div>
       {/* Page Header */}
@@ -116,6 +147,43 @@ export default function OwnerPanel() {
             {toggling ? 'Updating…' : status === 'OPEN' ? 'Close Restaurant' : 'Open Restaurant'}
           </button>
         </div>
+      </div>
+
+      {/* UPI Payment Settings */}
+      <div className="upi-settings-card">
+        <div className="upi-settings-header">
+          <div className="upi-settings-icon"><Smartphone size={18} /></div>
+          <div>
+            <div className="upi-settings-title">UPI Payment Settings</div>
+            <div className="upi-settings-subtitle">
+              Set your UPI ID so cashiers can generate QR codes for customer payments
+            </div>
+          </div>
+        </div>
+        {savedUpi && (
+          <div className="upi-current">
+            <CheckCircle size={13} /> Active: {savedUpi}
+          </div>
+        )}
+        <form onSubmit={handleSaveUpi} style={{ display: 'flex', gap: 'var(--space-sm)', flexWrap: 'wrap' }}>
+          <input
+            id="upi-id-input"
+            className="form-input"
+            type="text"
+            placeholder="e.g. yourname@upi or 9876543210@paytm"
+            value={upiInput}
+            onChange={(e) => setUpiInput(e.target.value)}
+            style={{ flex: 1, minWidth: 220 }}
+          />
+          <button
+            type="submit"
+            className="btn btn-primary"
+            disabled={savingUpi}
+            id="save-upi-btn"
+          >
+            {savingUpi ? 'Saving…' : savedUpi ? 'Update UPI' : 'Save UPI'}
+          </button>
+        </form>
       </div>
 
       {/* Stats */}
