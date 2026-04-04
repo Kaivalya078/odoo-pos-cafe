@@ -4,13 +4,21 @@ import { getAllFloors } from '../services/floorService';
 import { getTablesByFloor } from '../services/tableService';
 import { getAllProducts, createProduct, updateProduct, deleteProduct } from '../services/productService';
 import { getPendingOrders, approveOrder, rejectOrder } from '../services/orderService';
-import { Settings, Package, ClipboardList, CheckCircle, XCircle } from 'lucide-react';
+import { getSummary, getOrderHistory, getSessionHistory, getTopProducts } from '../services/analyticsService';
+import {
+  Settings, Package, ClipboardList, CheckCircle, XCircle,
+  BarChart3, Calendar, Search, X,
+} from 'lucide-react';
 import toast from 'react-hot-toast';
 import FloorList from '../components/FloorList';
 import TableGrid from '../components/TableGrid';
 import AddTableForm from '../components/AddTableForm';
 import AddProductForm from '../components/AddProductForm';
 import ProductList from '../components/ProductList';
+import SummaryCards from '../components/analytics/SummaryCards';
+import OrdersTable from '../components/analytics/OrdersTable';
+import SessionsTable from '../components/analytics/SessionsTable';
+import TopProducts from '../components/analytics/TopProducts';
 
 export default function AdminPanel() {
   const { status, toggleStatus } = useRestaurant();
@@ -33,6 +41,18 @@ export default function AdminPanel() {
   const [products, setProducts] = useState([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
   const [editingProduct, setEditingProduct] = useState(null);
+
+  // ── Analytics state ─────────────────────────────────────────────────────────
+  const [summaryData, setSummaryData] = useState(null);
+  const [orderHistory, setOrderHistory] = useState([]);
+  const [sessionHistory, setSessionHistory] = useState([]);
+  const [topProductsData, setTopProductsData] = useState([]);
+  const [loadingSummary, setLoadingSummary] = useState(true);
+  const [loadingOrders, setLoadingOrders] = useState(true);
+  const [loadingSessions, setLoadingSessions] = useState(true);
+  const [loadingTopProducts, setLoadingTopProducts] = useState(true);
+  const [filterStart, setFilterStart] = useState('');
+  const [filterEnd, setFilterEnd] = useState('');
 
   // Fetch pending orders
   const fetchPendingOrders = useCallback(async () => {
@@ -80,14 +100,73 @@ export default function AdminPanel() {
     }
   }, []);
 
+  // ── Analytics fetchers ──────────────────────────────────────────────────────
+  const fetchSummary = useCallback(async (startDate, endDate) => {
+    setLoadingSummary(true);
+    try {
+      const res = await getSummary(startDate || undefined, endDate || undefined);
+      setSummaryData(res.data.data);
+    } catch {
+      toast.error('Failed to load summary');
+    } finally {
+      setLoadingSummary(false);
+    }
+  }, []);
+
+  const fetchOrderHistory = useCallback(async (startDate, endDate) => {
+    setLoadingOrders(true);
+    try {
+      const params = {};
+      if (startDate) params.startDate = startDate;
+      if (endDate) params.endDate = endDate;
+      const res = await getOrderHistory(params);
+      setOrderHistory(res.data.data);
+    } catch {
+      toast.error('Failed to load order history');
+    } finally {
+      setLoadingOrders(false);
+    }
+  }, []);
+
+  const fetchSessionHistory = useCallback(async () => {
+    setLoadingSessions(true);
+    try {
+      const res = await getSessionHistory();
+      setSessionHistory(res.data.data);
+    } catch {
+      toast.error('Failed to load session history');
+    } finally {
+      setLoadingSessions(false);
+    }
+  }, []);
+
+  const fetchTopProducts = useCallback(async () => {
+    setLoadingTopProducts(true);
+    try {
+      const res = await getTopProducts();
+      setTopProductsData(res.data.data);
+    } catch {
+      toast.error('Failed to load top products');
+    } finally {
+      setLoadingTopProducts(false);
+    }
+  }, []);
+
   useEffect(() => {
     fetchFloors();
     fetchProducts();
     fetchPendingOrders();
     // Poll every 10s for new orders
     pollRef.current = setInterval(fetchPendingOrders, 10000);
+
+    // Fetch analytics on mount
+    fetchSummary();
+    fetchOrderHistory();
+    fetchSessionHistory();
+    fetchTopProducts();
+
     return () => clearInterval(pollRef.current);
-  }, [fetchFloors, fetchProducts, fetchPendingOrders]);
+  }, [fetchFloors, fetchProducts, fetchPendingOrders, fetchSummary, fetchOrderHistory, fetchSessionHistory, fetchTopProducts]);
 
   // Refetch tables when selected floor changes
   useEffect(() => {
@@ -97,6 +176,19 @@ export default function AdminPanel() {
       setTables([]);
     }
   }, [selectedFloor, fetchTables]);
+
+  // ── Filter handler ──────────────────────────────────────────────────────────
+  const handleApplyFilters = () => {
+    fetchSummary(filterStart, filterEnd);
+    fetchOrderHistory(filterStart, filterEnd);
+  };
+
+  const handleClearFilters = () => {
+    setFilterStart('');
+    setFilterEnd('');
+    fetchSummary();
+    fetchOrderHistory();
+  };
 
   // Order approve / reject
   const handleApprove = async (orderId) => {
@@ -364,6 +456,85 @@ export default function AdminPanel() {
         onEdit={handleProductEdit}
         onDelete={handleProductDelete}
       />
+
+      {/* ══════════════════════════════════════════════════════════════════════
+          ANALYTICS DASHBOARD
+          ══════════════════════════════════════════════════════════════════════ */}
+      <div className="section-divider" />
+
+      <div className="page-header">
+        <h2 className="page-title" style={{ fontSize: 18 }}>
+          <BarChart3 size={18} style={{ verticalAlign: 'middle', marginRight: 8 }} />
+          Analytics Dashboard
+        </h2>
+        <p className="page-subtitle">Revenue, orders, and product performance</p>
+      </div>
+
+      {/* Date Filters */}
+      <div className="an-filter-bar" id="analytics-filters">
+        <div className="an-filter-group">
+          <Calendar size={14} />
+          <label className="an-filter-label">From</label>
+          <input
+            type="date"
+            className="form-input an-filter-input"
+            value={filterStart}
+            onChange={(e) => setFilterStart(e.target.value)}
+            id="analytics-filter-start"
+          />
+        </div>
+        <div className="an-filter-group">
+          <Calendar size={14} />
+          <label className="an-filter-label">To</label>
+          <input
+            type="date"
+            className="form-input an-filter-input"
+            value={filterEnd}
+            onChange={(e) => setFilterEnd(e.target.value)}
+            id="analytics-filter-end"
+          />
+        </div>
+        <button
+          className="btn btn-primary btn-sm"
+          onClick={handleApplyFilters}
+          id="analytics-apply-filter"
+        >
+          <Search size={14} />
+          Apply
+        </button>
+        {(filterStart || filterEnd) && (
+          <button
+            className="btn btn-secondary btn-sm"
+            onClick={handleClearFilters}
+            id="analytics-clear-filter"
+          >
+            <X size={14} />
+            Clear
+          </button>
+        )}
+      </div>
+
+      {/* Summary Cards */}
+      <SummaryCards data={summaryData} loading={loadingSummary} />
+
+      {/* Top Products + Order History grid */}
+      <div className="an-grid-2">
+        <div className="card">
+          <div className="card-title">🏆 Top Products</div>
+          <TopProducts products={topProductsData} loading={loadingTopProducts} />
+        </div>
+
+        <div className="card">
+          <div className="card-title">📋 Session History</div>
+          <SessionsTable sessions={sessionHistory} loading={loadingSessions} />
+        </div>
+      </div>
+
+      {/* Order History */}
+      <div className="card">
+        <div className="card-title">📦 Order History</div>
+        <OrdersTable orders={orderHistory} loading={loadingOrders} />
+      </div>
     </div>
   );
 }

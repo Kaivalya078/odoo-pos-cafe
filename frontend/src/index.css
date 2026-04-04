@@ -3011,3 +3011,254 @@ ul, ol {
     flex-direction: column;
   }
 }
+
+/* ================================================================
+   PHASE 8 — ANALYTICS DASHBOARD
+   ================================================================ */
+
+/* ===== FILTER BAR ===== */
+.an-filter-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-lg);
+  flex-wrap: wrap;
+}
+
+.an-filter-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-secondary);
+}
+
+.an-filter-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.an-filter-input {
+  max-width: 160px;
+  padding: 7px 10px !important;
+  font-size: 13px !important;
+}
+
+/* ===== SUMMARY CARDS ===== */
+.an-summary-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-md);
+  margin-bottom: var(--space-lg);
+}
+
+.an-summary-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  transition: border-color var(--transition-fast), transform var(--transition-fast);
+  border-top: 3px solid var(--card-accent, var(--accent));
+}
+
+.an-summary-card:hover {
+  border-color: var(--card-accent, var(--accent));
+  transform: translateY(-2px);
+}
+
+.an-summary-card--loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100px;
+}
+
+.an-summary-card__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  background: rgba(124, 127, 242, 0.08);
+  color: var(--card-accent, var(--accent));
+  margin-bottom: var(--space-xs);
+}
+
+.an-summary-card__value {
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -0.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+.an-summary-card__label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* ===== 2-COLUMN GRID ===== */
+.an-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-lg);
+  margin-bottom: var(--space-lg);
+}
+
+/* ===== TOP PRODUCTS ===== */
+.an-top-products {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.an-top-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-sm) 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.an-top-item:last-child {
+  border-bottom: none;
+}
+
+.an-top-item__rank {
+  font-size: 14px;
+  font-weight: 800;
+  min-width: 28px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.an-top-item__info {
+  flex: 1;
+  min-width: 0;
+}
+
+.an-top-item__name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.an-top-item__bar-track {
+  height: 6px;
+  background: var(--bg-elevated);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.an-top-item__bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), #58a6ff);
+  border-radius: 999px;
+  transition: width 0.5s ease;
+  min-width: 4px;
+}
+
+.an-top-item__stats {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.an-top-item__qty {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.an-top-item__rev {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ===== TABLE BADGE ===== */
+.an-table-badge {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 700;
+  background: var(--accent-muted);
+  color: var(--accent);
+  letter-spacing: 0.3px;
+}
+
+/* ===== PAYMENT TAGS ===== */
+.an-payment-tag {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.an-payment-tag--cash {
+  background: var(--status-open-bg);
+  color: var(--status-open);
+}
+
+.an-payment-tag--card {
+  background: rgba(88, 166, 255, 0.12);
+  color: #58a6ff;
+}
+
+.an-payment-tag--upi {
+  background: var(--role-cashier-bg);
+  color: var(--role-cashier);
+}
+
+/* ===== EMPTY STATE ===== */
+.an-empty {
+  font-size: 13px;
+  color: var(--text-muted);
+  padding: var(--space-md) 0;
+}
+
+/* ===== RESPONSIVE — Phase 8 ===== */
+@media (max-width: 900px) {
+  .an-summary-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .an-grid-2 {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .an-summary-row {
+    grid-template-columns: 1fr;
+  }
+
+  .an-filter-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .an-filter-input {
+    max-width: none;
+  }
+}
