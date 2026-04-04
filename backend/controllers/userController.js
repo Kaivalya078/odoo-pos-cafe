@@ -96,4 +96,24 @@ const getOwnerDashboard = asyncHandler(async (req, res) => {
   });
 });
 
-module.exports = { getAllUsers, createUser, updateUserRole, getOwnerDashboard };
+// @route   PATCH /api/users/upi
+// @access  Private (OWNER)
+const updateUpiId = asyncHandler(async (req, res) => {
+  const { upiId } = req.body;
+
+  if (!upiId || !upiId.trim()) {
+    res.status(400);
+    throw new Error('upiId is required');
+  }
+
+  const user = await User.findByIdAndUpdate(
+    req.user._id,
+    { upiId: upiId.trim() },
+    { new: true }
+  ).select('-password');
+
+  res.status(200).json({ success: true, data: { upiId: user.upiId } });
+});
+
+module.exports = { getAllUsers, createUser, updateUserRole, getOwnerDashboard, updateUpiId };
+

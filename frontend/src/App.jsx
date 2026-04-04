@@ -82,7 +82,7 @@ export default function App() {
                 </ProtectedRoute>
               } />
               <Route path="/cashier" element={
-                <ProtectedRoute allowedRoles={['CASHIER']}>
+                <ProtectedRoute allowedRoles={['CASHIER', 'OWNER', 'ADMIN']}>
                   <CashierScreen />
                 </ProtectedRoute>
               } />

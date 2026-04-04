@@ -14,10 +14,12 @@ const ROLE_NAV = {
     { to: '/owner', label: 'Owner Panel', icon: LayoutDashboard },
     { to: '/admin', label: 'Admin Panel', icon: Settings },
     { to: '/kitchen', label: 'Kitchen', icon: ChefHat },
+    { to: '/cashier', label: 'Cashier', icon: CreditCard },
     { to: '/tables', label: 'Orders', icon: UtensilsCrossed },
   ],
   ADMIN: [
     { to: '/admin', label: 'Admin Panel', icon: Settings },
+    { to: '/cashier', label: 'Cashier', icon: CreditCard },
     { to: '/tables', label: 'Orders', icon: UtensilsCrossed },
   ],
   KITCHEN: [

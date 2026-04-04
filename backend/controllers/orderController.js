@@ -3,6 +3,7 @@ const Order = require('../models/Order');
 const Table = require('../models/Table');
 const Product = require('../models/Product');
 const Restaurant = require('../models/Restaurant');
+const Session = require('../models/Session');
 
 // Calculates item total from DB product data — never trusts frontend prices
 const calculateItemTotal = (dbProduct, variant, addons, quantity) => {
@@ -53,9 +54,15 @@ const createOrder = asyncHandler(async (req, res) => {
     res.status(404);
     throw new Error('Table not found');
   }
+
+  // Allow orders only if FREE (first order) or OCCUPIED with active session
+  let activeSession = null;
   if (table.status === 'OCCUPIED') {
-    res.status(409);
-    throw new Error('This table is already occupied');
+    activeSession = await Session.findOne({ table: tableId, status: 'ACTIVE' });
+    if (!activeSession) {
+      res.status(409);
+      throw new Error('Table is occupied but has no active session. Contact staff.');
+    }
   }
 
   // Build order items with server-side price calculation
@@ -93,6 +100,7 @@ const createOrder = asyncHandler(async (req, res) => {
 
   const order = await Order.create({
     table: tableId,
+    session: activeSession ? activeSession._id : null,
     customerName,
     items: orderItems,
     totalAmount: parseFloat(totalAmount.toFixed(2)),
@@ -124,7 +132,14 @@ const approveOrder = asyncHandler(async (req, res) => {
     throw new Error(`Order is already ${order.status}`);
   }
 
+  // Find or create active session for this table
+  let session = await Session.findOne({ table: order.table, status: 'ACTIVE' });
+  if (!session) {
+    session = await Session.create({ table: order.table });
+  }
+
   order.status = 'APPROVED';
+  order.session = session._id;
   await order.save();
 
   // Table becomes OCCUPIED only after admin approval

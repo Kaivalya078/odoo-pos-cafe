@@ -19,7 +19,7 @@ const orderItemSchema = new mongoose.Schema(
     preparedQuantity: { type: Number, default: 0, min: 0 },
     itemTotal: { type: Number, required: true },
   }
-  // _id enabled (default) so kitchen can reference items by ID
+  // _id enabled (default) so kitchen can address items by ID
 );
 
 const orderSchema = new mongoose.Schema(
@@ -28,6 +28,11 @@ const orderSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Table',
       required: [true, 'Table is required'],
+    },
+    session: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Session',
+      default: null,
     },
     customerName: {
       type: String,
@@ -41,7 +46,6 @@ const orderSchema = new mongoose.Schema(
     totalAmount: { type: Number, required: true },
     status: {
       type: String,
-      // PREPARING / PREPARED are auto-derived by kitchen controller
       enum: ['PLACED', 'APPROVED', 'PREPARING', 'PREPARED', 'REJECTED'],
       default: 'PLACED',
     },
@@ -50,6 +54,12 @@ const orderSchema = new mongoose.Schema(
       enum: ['UNPAID', 'PAID'],
       default: 'UNPAID',
     },
+    paymentMethod: {
+      type: String,
+      enum: ['CASH', 'UPI', 'CARD'],
+      default: null,
+    },
+    paidAt: { type: Date, default: null },
   },
   { timestamps: true }
 );
