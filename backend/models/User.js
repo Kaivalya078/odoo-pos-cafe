@@ -26,6 +26,11 @@ const userSchema = new mongoose.Schema(
       enum: ['OWNER', 'ADMIN', 'KITCHEN', 'CASHIER'],
       required: [true, 'Role is required'],
     },
+    upiId: {
+      type: String,
+      trim: true,
+      default: null,
+    },
   },
   { timestamps: true }
 );

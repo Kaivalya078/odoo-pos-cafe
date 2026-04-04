@@ -4,6 +4,7 @@ const {
   createUser,
   updateUserRole,
   getOwnerDashboard,
+  updateUpiId,
 } = require('../controllers/userController');
 const { protect, authorizeRoles } = require('../middleware/authMiddleware');
 
@@ -16,6 +17,7 @@ router.use(protect);
 router.get('/dashboard', authorizeRoles('OWNER'), getOwnerDashboard);
 router.get('/', authorizeRoles('OWNER'), getAllUsers);
 router.post('/', authorizeRoles('OWNER'), createUser);
+router.patch('/upi', authorizeRoles('OWNER'), updateUpiId);        // must be before /:id/role
 router.patch('/:id/role', authorizeRoles('OWNER'), updateUserRole);
 
 module.exports = router;
