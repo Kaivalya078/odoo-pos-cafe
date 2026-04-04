@@ -10,6 +10,7 @@ const { getMenu } = require('./controllers/productController');
 const orderRoutes = require('./routes/orderRoutes');
 const kitchenRoutes = require('./routes/kitchenRoutes');
 const cashierRoutes = require('./routes/cashierRoutes');
+const reportRoutes = require('./routes/reportRoutes');
 
 const app = express();
 
@@ -33,6 +34,7 @@ app.get('/api/menu', getMenu); // public — no router-level auth middleware
 app.use('/api/orders', orderRoutes);
 app.use('/api/kitchen', kitchenRoutes);
 app.use('/api/cashier', cashierRoutes);
+app.use('/api/admin', reportRoutes);
 
 // 404 + error handlers (must be last)
 app.use(notFound);
