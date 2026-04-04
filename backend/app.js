@@ -11,6 +11,7 @@ const orderRoutes = require('./routes/orderRoutes');
 const kitchenRoutes = require('./routes/kitchenRoutes');
 const cashierRoutes = require('./routes/cashierRoutes');
 const reportRoutes = require('./routes/reportRoutes');
+const bookingRoutes = require('./routes/bookingRoutes');
 
 const app = express();
 
@@ -35,6 +36,7 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/kitchen', kitchenRoutes);
 app.use('/api/cashier', cashierRoutes);
 app.use('/api/admin', reportRoutes);
+app.use('/api/bookings', bookingRoutes);
 
 // 404 + error handlers (must be last)
 app.use(notFound);

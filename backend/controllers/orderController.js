@@ -4,6 +4,7 @@ const Table = require('../models/Table');
 const Product = require('../models/Product');
 const Restaurant = require('../models/Restaurant');
 const Session = require('../models/Session');
+const { getUpcomingBooking } = require('./bookingController');
 
 // Calculates item total from DB product data — never trusts frontend prices
 const calculateItemTotal = (dbProduct, variant, addons, quantity) => {
@@ -63,6 +64,15 @@ const createOrder = asyncHandler(async (req, res) => {
       res.status(409);
       throw new Error('Table is occupied but has no active session. Contact staff.');
     }
+  }
+
+  // Block order if a confirmed booking exists within the next 30 minutes
+  const upcomingBooking = await getUpcomingBooking(tableId);
+  if (upcomingBooking) {
+    res.status(409);
+    throw new Error(
+      'This table has a reservation within the next 30 minutes. Orders cannot be placed.'
+    );
   }
 
   // Build order items with server-side price calculation

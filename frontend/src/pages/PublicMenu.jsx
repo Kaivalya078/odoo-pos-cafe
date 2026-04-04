@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { getPublicMenu } from '../services/productService';
-import { Coffee, UtensilsCrossed } from 'lucide-react';
+import { Coffee, UtensilsCrossed, CalendarDays } from 'lucide-react';
 
 export default function PublicMenu() {
   const [menu, setMenu] = useState({});
@@ -59,6 +60,12 @@ export default function PublicMenu() {
             <span className="menu-meta-dot">·</span>
             <span>{categories.length} categories</span>
           </div>
+        </div>
+        <div className="menu-header-actions">
+          <Link to="/book" className="btn btn-primary" id="menu-reserve-btn">
+            <CalendarDays size={16} />
+            Reserve a Table
+          </Link>
         </div>
       </header>
 

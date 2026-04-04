@@ -5,9 +5,11 @@ import { getTablesByFloor } from '../services/tableService';
 import { getAllProducts, createProduct, updateProduct, deleteProduct } from '../services/productService';
 import { getPendingOrders, approveOrder, rejectOrder } from '../services/orderService';
 import { getSummary, getOrderHistory, getSessionHistory, getTopProducts } from '../services/analyticsService';
+import { getBookings, cancelBooking, completeBooking } from '../services/bookingService';
+import { updateHours } from '../services/restaurantService';
 import {
   Settings, Package, ClipboardList, CheckCircle, XCircle,
-  BarChart3, Calendar, Search, X,
+  BarChart3, Calendar, Search, X, CalendarDays, Clock, Phone, User,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import FloorList from '../components/FloorList';
@@ -53,6 +55,16 @@ export default function AdminPanel() {
   const [loadingTopProducts, setLoadingTopProducts] = useState(true);
   const [filterStart, setFilterStart] = useState('');
   const [filterEnd, setFilterEnd] = useState('');
+
+  // ── Booking state ───────────────────────────────────────────────────────────
+  const [bookings, setBookings] = useState([]);
+  const [loadingBookings, setLoadingBookings] = useState(true);
+  const [bookingActioning, setBookingActioning] = useState(null);
+
+  // ── Operating hours state ───────────────────────────────────────────────────
+  const [openingHour, setOpeningHour] = useState(9);
+  const [closingHour, setClosingHour] = useState(22);
+  const [savingHours, setSavingHours] = useState(false);
 
   // Fetch pending orders
   const fetchPendingOrders = useCallback(async () => {
@@ -152,6 +164,57 @@ export default function AdminPanel() {
     }
   }, []);
 
+  // ── Booking fetchers ─────────────────────────────────────────────────────────
+  const fetchBookings = useCallback(async () => {
+    setLoadingBookings(true);
+    try {
+      const res = await getBookings();
+      setBookings(res.data.data);
+    } catch {
+      toast.error('Failed to load bookings');
+    } finally {
+      setLoadingBookings(false);
+    }
+  }, []);
+
+  const handleCancelBooking = async (id) => {
+    setBookingActioning(id);
+    try {
+      await cancelBooking(id);
+      toast.success('Booking cancelled');
+      fetchBookings();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to cancel booking');
+    } finally {
+      setBookingActioning(null);
+    }
+  };
+
+  const handleCompleteBooking = async (id) => {
+    setBookingActioning(id);
+    try {
+      await completeBooking(id);
+      toast.success('Booking completed');
+      fetchBookings();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to complete booking');
+    } finally {
+      setBookingActioning(null);
+    }
+  };
+
+  const handleSaveHours = async () => {
+    setSavingHours(true);
+    try {
+      await updateHours(Number(openingHour), Number(closingHour));
+      toast.success('Operating hours updated');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to update hours');
+    } finally {
+      setSavingHours(false);
+    }
+  };
+
   useEffect(() => {
     fetchFloors();
     fetchProducts();
@@ -165,8 +228,11 @@ export default function AdminPanel() {
     fetchSessionHistory();
     fetchTopProducts();
 
+    // Fetch bookings
+    fetchBookings();
+
     return () => clearInterval(pollRef.current);
-  }, [fetchFloors, fetchProducts, fetchPendingOrders, fetchSummary, fetchOrderHistory, fetchSessionHistory, fetchTopProducts]);
+  }, [fetchFloors, fetchProducts, fetchPendingOrders, fetchSummary, fetchOrderHistory, fetchSessionHistory, fetchTopProducts, fetchBookings]);
 
   // Refetch tables when selected floor changes
   useEffect(() => {
@@ -534,6 +600,154 @@ export default function AdminPanel() {
       <div className="card">
         <div className="card-title">📦 Order History</div>
         <OrdersTable orders={orderHistory} loading={loadingOrders} />
+      </div>
+
+      {/* ══════════════════════════════════════════════════════════════════════
+          BOOKING MANAGEMENT + OPERATING HOURS
+          ══════════════════════════════════════════════════════════════════════ */}
+      <div className="section-divider" />
+
+      <div className="page-header">
+        <h2 className="page-title" style={{ fontSize: 18 }}>
+          <CalendarDays size={18} style={{ verticalAlign: 'middle', marginRight: 8 }} />
+          Bookings & Operating Hours
+        </h2>
+        <p className="page-subtitle">Manage table reservations and set operating hours</p>
+      </div>
+
+      {/* Operating Hours */}
+      <div className="card">
+        <div className="card-title">
+          <Clock size={16} />
+          Operating Hours
+        </div>
+        <div className="bk-hours-row">
+          <div className="bk-hours-field">
+            <label className="form-label" htmlFor="admin-opening-hour">Opening Hour (24h)</label>
+            <input
+              id="admin-opening-hour"
+              type="number"
+              className="form-input"
+              value={openingHour}
+              onChange={(e) => setOpeningHour(e.target.value)}
+              min={0}
+              max={23}
+              style={{ maxWidth: 100 }}
+            />
+          </div>
+          <div className="bk-hours-field">
+            <label className="form-label" htmlFor="admin-closing-hour">Closing Hour (24h)</label>
+            <input
+              id="admin-closing-hour"
+              type="number"
+              className="form-input"
+              value={closingHour}
+              onChange={(e) => setClosingHour(e.target.value)}
+              min={1}
+              max={24}
+              style={{ maxWidth: 100 }}
+            />
+          </div>
+          <button
+            className="btn btn-primary btn-sm"
+            onClick={handleSaveHours}
+            disabled={savingHours}
+            id="admin-save-hours"
+            style={{ alignSelf: 'flex-end' }}
+          >
+            {savingHours ? 'Saving…' : 'Save Hours'}
+          </button>
+        </div>
+      </div>
+
+      {/* Bookings List */}
+      <div className="card">
+        <div className="card-title">
+          <CalendarDays size={16} />
+          Bookings
+          {bookings.filter((b) => b.status === 'BOOKED').length > 0 && (
+            <span style={{
+              marginLeft: 8, background: 'var(--accent)', color: '#fff',
+              borderRadius: 999, fontSize: 11, padding: '1px 8px', fontWeight: 700,
+            }}>{bookings.filter((b) => b.status === 'BOOKED').length}</span>
+          )}
+        </div>
+
+        {loadingBookings ? (
+          <div className="loading-spinner" style={{ minHeight: 80 }}>
+            <div className="spinner" />
+          </div>
+        ) : bookings.length === 0 ? (
+          <p style={{ color: 'var(--text-muted)', fontSize: 14 }}>No bookings found.</p>
+        ) : (
+          <div className="table-wrap">
+            <table className="table" id="admin-bookings-table">
+              <thead>
+                <tr>
+                  <th>Customer</th>
+                  <th>Phone</th>
+                  <th>Table</th>
+                  <th>Time</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {bookings.map((b) => (
+                  <tr key={b._id}>
+                    <td style={{ fontWeight: 600 }}>
+                      <User size={13} style={{ marginRight: 4, verticalAlign: 'text-bottom' }} />
+                      {b.name}
+                    </td>
+                    <td style={{ fontSize: 13 }}>
+                      <Phone size={12} style={{ marginRight: 4 }} />
+                      {b.phone}
+                    </td>
+                    <td>
+                      <span className="an-table-badge">T{b.table?.tableNumber ?? '—'}</span>
+                    </td>
+                    <td style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+                      {new Date(b.startTime).toLocaleString('en-IN', {
+                        day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit',
+                        hour12: true, timeZone: 'UTC',
+                      })}
+                    </td>
+                    <td>
+                      <span className={`bk-status bk-status--${b.status.toLowerCase()}`}>
+                        {b.status}
+                      </span>
+                    </td>
+                    <td>
+                      {b.status === 'BOOKED' ? (
+                        <div style={{ display: 'flex', gap: 6 }}>
+                          <button
+                            className="btn btn-primary btn-sm"
+                            onClick={() => handleCompleteBooking(b._id)}
+                            disabled={bookingActioning === b._id}
+                          >
+                            <CheckCircle size={13} />
+                            {bookingActioning === b._id ? '…' : 'Complete'}
+                          </button>
+                          <button
+                            className="btn btn-secondary btn-sm"
+                            onClick={() => handleCancelBooking(b._id)}
+                            disabled={bookingActioning === b._id}
+                            style={{ color: 'var(--error, #e55)' }}
+                          >
+                            <XCircle size={13} />
+                            Cancel
+                          </button>
+                        </div>
+                      ) : (
+                        <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>—</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );

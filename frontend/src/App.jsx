@@ -12,6 +12,7 @@ import CashierScreen from './pages/CashierScreen';
 import PublicMenu from './pages/PublicMenu';
 import TableSelection from './pages/TableSelection';
 import OrderPage from './pages/OrderPage';
+import BookingPage from './pages/BookingPage';
 
 const ROLE_REDIRECT = {
   OWNER: '/owner',
@@ -59,6 +60,7 @@ export default function App() {
             <Route path="/menu" element={<PublicMenu />} />
             <Route path="/tables" element={<TableSelection />} />
             <Route path="/order" element={<OrderPage />} />
+            <Route path="/book" element={<BookingPage />} />
 
             {/* Protected (with sidebar layout) */}
             <Route element={

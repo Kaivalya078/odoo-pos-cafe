@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { getPublicTables } from '../services/tableService';
-import { Coffee, Users, ArrowRight } from 'lucide-react';
+import { Coffee, Users, ArrowRight, CalendarDays } from 'lucide-react';
 
 export default function TableSelection() {
   const [tables, setTables] = useState([]);
@@ -67,6 +67,12 @@ export default function TableSelection() {
             <span className="menu-meta-dot">·</span>
             <span>{tables.length} total tables</span>
           </div>
+        </div>
+        <div className="menu-header-actions">
+          <Link to="/book" className="btn btn-primary btn-sm" id="tables-reserve-btn">
+            <CalendarDays size={14} />
+            Reserve a Table
+          </Link>
         </div>
       </header>
 
