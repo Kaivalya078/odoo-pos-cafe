@@ -10,11 +10,10 @@ const { protect, authorizeRoles } = require('../middleware/authMiddleware');
 
 const router = express.Router();
 
-// ── PUBLIC ────────────────────────────────────────────────────────────────────
-// Customers need the table list to select a table (no token required)
+// ── PUBLIC — customers need this to select a table (no token required) ────────
 router.get('/', getAllTables);
 
-// ── OWNER / ADMIN ─────────────────────────────────────────────────────────────
+// ── OWNER / ADMIN only ────────────────────────────────────────────────────────
 router.use(protect, authorizeRoles('OWNER', 'ADMIN'));
 router.get('/floor/:floorId', getTablesByFloor);
 router.post('/', createTable);

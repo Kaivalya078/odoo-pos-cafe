@@ -13,6 +13,7 @@ const ROLE_NAV = {
   OWNER: [
     { to: '/owner', label: 'Owner Panel', icon: LayoutDashboard },
     { to: '/admin', label: 'Admin Panel', icon: Settings },
+    { to: '/kitchen', label: 'Kitchen', icon: ChefHat },
     { to: '/tables', label: 'Orders', icon: UtensilsCrossed },
   ],
   ADMIN: [
