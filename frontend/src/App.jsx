@@ -10,6 +10,8 @@ import AdminPanel from './pages/AdminPanel';
 import KitchenScreen from './pages/KitchenScreen';
 import CashierScreen from './pages/CashierScreen';
 import PublicMenu from './pages/PublicMenu';
+import TableSelection from './pages/TableSelection';
+import OrderPage from './pages/OrderPage';
 
 const ROLE_REDIRECT = {
   OWNER: '/owner',
@@ -55,6 +57,7 @@ export default function App() {
             {/* Public */}
             <Route path="/login" element={<LoginPage />} />
             <Route path="/menu" element={<PublicMenu />} />
+            <Route path="/order" element={<OrderPage />} />
 
             {/* Protected (with sidebar layout) */}
             <Route element={
@@ -80,6 +83,11 @@ export default function App() {
               <Route path="/cashier" element={
                 <ProtectedRoute allowedRoles={['CASHIER']}>
                   <CashierScreen />
+                </ProtectedRoute>
+              } />
+              <Route path="/tables" element={
+                <ProtectedRoute allowedRoles={['OWNER', 'ADMIN']}>
+                  <TableSelection />
                 </ProtectedRoute>
               } />
             </Route>

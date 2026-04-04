@@ -6,15 +6,18 @@ import {
   ChefHat,
   CreditCard,
   LogOut,
+  UtensilsCrossed,
 } from 'lucide-react';
 
 const ROLE_NAV = {
   OWNER: [
     { to: '/owner', label: 'Owner Panel', icon: LayoutDashboard },
     { to: '/admin', label: 'Admin Panel', icon: Settings },
+    { to: '/tables', label: 'Orders', icon: UtensilsCrossed },
   ],
   ADMIN: [
     { to: '/admin', label: 'Admin Panel', icon: Settings },
+    { to: '/tables', label: 'Orders', icon: UtensilsCrossed },
   ],
   KITCHEN: [
     { to: '/kitchen', label: 'Kitchen', icon: ChefHat },
