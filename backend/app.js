@@ -3,6 +3,8 @@ const { notFound, errorHandler } = require('./middleware/errorMiddleware');
 const authRoutes = require('./routes/authRoutes');
 const restaurantRoutes = require('./routes/restaurantRoutes');
 const userRoutes = require('./routes/userRoutes');
+const floorRoutes = require('./routes/floorRoutes');
+const tableRoutes = require('./routes/tableRoutes');
 
 const app = express();
 
@@ -19,6 +21,8 @@ app.get('/api/health', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/restaurant', restaurantRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/floors', floorRoutes);
+app.use('/api/tables', tableRoutes);
 
 // 404 + error handlers (must be last)
 app.use(notFound);
