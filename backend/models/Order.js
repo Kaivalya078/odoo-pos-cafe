@@ -16,9 +16,10 @@ const orderItemSchema = new mongoose.Schema(
       },
     ],
     quantity: { type: Number, required: true, min: [1, 'Quantity must be at least 1'] },
+    preparedQuantity: { type: Number, default: 0, min: 0 },
     itemTotal: { type: Number, required: true },
-  },
-  { _id: false }
+  }
+  // _id enabled (default) so kitchen can reference items by ID
 );
 
 const orderSchema = new mongoose.Schema(
@@ -40,7 +41,8 @@ const orderSchema = new mongoose.Schema(
     totalAmount: { type: Number, required: true },
     status: {
       type: String,
-      enum: ['PLACED', 'APPROVED', 'REJECTED'],
+      // PREPARING / PREPARED are auto-derived by kitchen controller
+      enum: ['PLACED', 'APPROVED', 'PREPARING', 'PREPARED', 'REJECTED'],
       default: 'PLACED',
     },
     paymentStatus: {
