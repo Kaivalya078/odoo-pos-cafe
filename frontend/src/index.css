@@ -686,6 +686,192 @@ ul, ol {
   font-family: 'Inter', sans-serif !important;
 }
 
+/* ===== FLOOR MANAGEMENT ===== */
+.floor-add-row {
+  display: flex;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-md);
+}
+
+.floor-add-row .form-input {
+  flex: 1;
+}
+
+.floor-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+}
+
+.floor-chip {
+  padding: 8px 16px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast),
+    border-color var(--transition-fast);
+}
+
+.floor-chip:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.floor-chip--active {
+  background: var(--accent-muted);
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.floor-empty {
+  font-size: 13px;
+  color: var(--text-muted);
+  padding: var(--space-md) 0;
+}
+
+/* ===== TABLE GRID ===== */
+.table-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: var(--space-md);
+}
+
+.table-grid-empty {
+  font-size: 13px;
+  color: var(--text-muted);
+  padding: var(--space-md) 0;
+}
+
+.table-card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  transition: border-color var(--transition-fast);
+}
+
+.table-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-sm);
+}
+
+.table-card-number {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.table-card-delete {
+  padding: 4px;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  transition: color var(--transition-fast), background var(--transition-fast);
+}
+
+.table-card-delete:hover {
+  color: var(--danger);
+  background: var(--danger-bg);
+}
+
+.table-card-seats {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: var(--space-sm);
+}
+
+/* Table status tags */
+.table-status-tag {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+
+.table-status-tag--FREE {
+  background: var(--status-open-bg);
+  color: var(--status-open);
+}
+
+.table-status-tag--OCCUPIED {
+  background: rgba(255, 166, 43, 0.12);
+  color: #ffa62b;
+}
+
+.table-status-tag--RESERVED {
+  background: rgba(188, 140, 255, 0.12);
+  color: #bc8cff;
+}
+
+/* Card border accents for status */
+.table-card--free {
+  border-left: 3px solid var(--status-open);
+}
+
+.table-card--occupied {
+  border-left: 3px solid #ffa62b;
+}
+
+.table-card--reserved {
+  border-left: 3px solid #bc8cff;
+}
+
+/* Table status select */
+.table-status-select {
+  width: 100%;
+  padding: 4px 8px;
+  background: var(--bg-base);
+  border: 1px solid var(--border-default);
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%238e8ea0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 6px center;
+  padding-right: 20px;
+  transition: border-color var(--transition-fast);
+}
+
+.table-status-select:focus {
+  border-color: var(--accent);
+}
+
+.table-status-select option {
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+}
+
+.table-status-select--FREE {
+  color: var(--status-open);
+}
+
+.table-status-select--OCCUPIED {
+  color: #ffa62b;
+}
+
+.table-status-select--RESERVED {
+  color: #bc8cff;
+}
+
+/* ===== ADD TABLE FORM — 3 col ===== */
+.form-row--3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: var(--space-md);
+}
+
 /* ===== RESPONSIVE ===== */
 @media (max-width: 768px) {
   .sidebar {
@@ -718,5 +904,13 @@ ul, ol {
 
   .stat-row {
     flex-direction: column;
+  }
+
+  .form-row--3 {
+    grid-template-columns: 1fr;
+  }
+
+  .table-grid {
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
   }
 }
