@@ -1,156 +1,222 @@
 import { useState } from 'react';
-import { Plus, Minus, ShoppingCart, UtensilsCrossed } from 'lucide-react';
+import { Plus, Minus, X, ShoppingCart, UtensilsCrossed } from 'lucide-react';
 
-export default function ProductCard({ product, onAddToCart }) {
+/* ─── Category → placeholder image ─── */
+const CAT_IMG = {
+  'food':        'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&q=80',
+  'quick bites': 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400&q=80',
+  'quickbites':  'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400&q=80',
+  'coffee':      'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=400&q=80',
+  'shakes':      'https://images.unsplash.com/photo-1572490122747-3968b75cc699?w=400&q=80',
+  'milkshakes':  'https://images.unsplash.com/photo-1572490122747-3968b75cc699?w=400&q=80',
+  'desserts':    'https://images.unsplash.com/photo-1551024506-0bccd828d307?w=400&q=80',
+  'dessert':     'https://images.unsplash.com/photo-1551024506-0bccd828d307?w=400&q=80',
+};
+const DEFAULT_IMG = 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400&q=80';
+
+/* ─── Popup modal for variants + addons selection ─── */
+function CustomiseModal({ product, imgSrc, onClose, onConfirm }) {
   const [selectedVariant, setSelectedVariant] = useState(
-    product.variants && product.variants.length > 0 ? product.variants[0] : null
+    product.variants?.length > 0 ? product.variants[0] : null
   );
   const [selectedAddons, setSelectedAddons] = useState([]);
   const [quantity, setQuantity] = useState(1);
 
-  const isUnavailable = product.availability === 'UNAVAILABLE';
+  const toggleAddon = (addon) =>
+    setSelectedAddons((prev) =>
+      prev.find((a) => a.name === addon.name)
+        ? prev.filter((a) => a.name !== addon.name)
+        : [...prev, addon]
+    );
 
-  const toggleAddon = (addon) => {
-    setSelectedAddons((prev) => {
-      const exists = prev.find((a) => a.name === addon.name);
-      if (exists) return prev.filter((a) => a.name !== addon.name);
-      return [...prev, addon];
-    });
-  };
+  let total = selectedVariant ? selectedVariant.price : 0;
+  selectedAddons.forEach((a) => { total += a.price; });
+  total *= quantity;
 
-  const handleAdd = () => {
-    if (isUnavailable) return;
-    const cartItem = {
-      product: product._id,
-      productName: product.name,
-      quantity,
-    };
+  const handleConfirm = () => {
+    const item = { product: product._id, productName: product.name, quantity };
     if (selectedVariant) {
-      cartItem.variant = { name: selectedVariant.name, price: selectedVariant.price };
-      cartItem.displayPrice = selectedVariant.price;
+      item.variant = { name: selectedVariant.name, price: selectedVariant.price };
+      item.displayPrice = selectedVariant.price;
     }
-    if (selectedAddons.length > 0) {
-      cartItem.addons = selectedAddons.map((a) => ({ name: a.name, price: a.price }));
-    }
-    onAddToCart(cartItem);
-    setQuantity(1);
-    setSelectedAddons([]);
+    if (selectedAddons.length > 0)
+      item.addons = selectedAddons.map((a) => ({ name: a.name, price: a.price }));
+    onConfirm(item);
+    onClose();
   };
-
-  let displayPrice = 0;
-  if (selectedVariant) displayPrice = selectedVariant.price;
-  selectedAddons.forEach((a) => { displayPrice += a.price; });
-  displayPrice *= quantity;
 
   return (
-    <div
-      className={`order-product-card${isUnavailable ? ' order-product-card--disabled' : ''}`}
-      id={`product-${product._id}`}
-    >
-      {/* Image Placeholder */}
-      <div className="product-img-block">
-        {product.image ? (
-          <img src={product.image} alt={product.name} className="product-img" />
-        ) : (
-          <div className="product-img-placeholder">
-            <UtensilsCrossed size={24} className="product-img-icon" />
-            <span className="product-img-label">No Image</span>
-          </div>
-        )}
-        {isUnavailable && (
-          <span className="unavailable-badge product-img-badge">Unavailable</span>
-        )}
-      </div>
+    <div className="pmodal-overlay" onClick={onClose}>
+      <div className="pmodal" onClick={(e) => e.stopPropagation()}>
 
-      {/* Body */}
-      <div className="order-product-body">
-        <div className="order-product-header">
-          <h3 className="order-product-name">{product.name}</h3>
+        {/* Drag handle + close row */}
+        <div className="pmodal__handle-row">
+          <div className="pmodal__handle" />
+          <button className="pmodal__close" onClick={onClose} aria-label="Close">
+            <X size={16} />
+          </button>
         </div>
 
-        {product.description && (
-          <p className="order-product-desc">{product.description}</p>
-        )}
+        {/* Scrollable body */}
+        <div className="pmodal__body">
+          <h3 className="pmodal__name">{product.name}</h3>
+          {product.description && <p className="pmodal__desc">{product.description}</p>}
 
-        {/* Variants */}
-        {product.variants && product.variants.length > 0 && (
-          <div className="order-product-section">
-            <label className="order-section-label">Variant</label>
-            <div className="order-variant-options">
-              {product.variants.map((v, i) => (
-                <button
-                  key={i}
-                  type="button"
-                  className={`order-variant-btn${selectedVariant?.name === v.name ? ' order-variant-btn--active' : ''}`}
-                  onClick={() => setSelectedVariant(v)}
-                  disabled={isUnavailable}
-                >
-                  <span>{v.name}</span>
-                  <span className="order-variant-price">₹{v.price}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Addons */}
-        {product.addons && product.addons.length > 0 && (
-          <div className="order-product-section">
-            <label className="order-section-label">Add-ons</label>
-            <div className="order-addon-options">
-              {product.addons.map((a, i) => {
-                const isSelected = selectedAddons.find((sa) => sa.name === a.name);
-                return (
+          {/* Variants — horizontal pill chips */}
+          {product.variants?.length > 0 && (
+            <div className="pmodal__section">
+              <div className="pmodal__section-title">Choose variant</div>
+              <div className="pmodal__chips-row">
+                {product.variants.map((v, i) => (
                   <button
                     key={i}
                     type="button"
-                    className={`order-addon-btn${isSelected ? ' order-addon-btn--active' : ''}`}
-                    onClick={() => toggleAddon(a)}
-                    disabled={isUnavailable}
+                    className={`pmodal__chip${selectedVariant?.name === v.name ? ' pmodal__chip--active' : ''}`}
+                    onClick={() => setSelectedVariant(v)}
                   >
-                    <span>{a.name}</span>
-                    <span className="order-addon-price">+₹{a.price}</span>
+                    <span className="pmodal__chip-name">{v.name}</span>
+                    <span className="pmodal__chip-price">₹{v.price}</span>
                   </button>
-                );
-              })}
+                ))}
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Footer: Qty + Add */}
-        <div className="order-product-footer">
-          <div className="order-qty-control">
+          {/* Add-ons — horizontally scrollable chips */}
+          {product.addons?.length > 0 && (
+            <div className="pmodal__section">
+              <div className="pmodal__section-title">
+                Add-ons <span className="pmodal__optional">optional</span>
+              </div>
+              <div className="pmodal__chips-scroll">
+                {product.addons.map((a, i) => {
+                  const on = !!selectedAddons.find((sa) => sa.name === a.name);
+                  return (
+                    <button
+                      key={i}
+                      type="button"
+                      className={`pmodal__chip pmodal__chip--addon${on ? ' pmodal__chip--active' : ''}`}
+                      onClick={() => toggleAddon(a)}
+                    >
+                      {on && <span className="pmodal__chip-check">✓ </span>}
+                      <span className="pmodal__chip-name">{a.name}</span>
+                      <span className="pmodal__chip-price">+₹{a.price}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="pmodal__footer">
+          <div className="pmodal__qty-control">
             <button
-              type="button"
-              className="order-qty-btn"
+              className="pmodal__qty-btn"
               onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-              disabled={isUnavailable || quantity <= 1}
+              disabled={quantity <= 1}
             >
-              <Minus size={13} />
+              <Minus size={16} />
             </button>
-            <span className="order-qty-value">{quantity}</span>
-            <button
-              type="button"
-              className="order-qty-btn"
-              onClick={() => setQuantity((q) => q + 1)}
-              disabled={isUnavailable}
-            >
-              <Plus size={13} />
+            <span className="pmodal__qty-value">{quantity}</span>
+            <button className="pmodal__qty-btn" onClick={() => setQuantity((q) => q + 1)}>
+              <Plus size={16} />
             </button>
           </div>
-
           <button
-            type="button"
-            className="btn btn-primary order-add-btn"
-            onClick={handleAdd}
-            disabled={isUnavailable || (product.variants?.length > 0 && !selectedVariant)}
-            id={`add-to-cart-${product._id}`}
+            className="pmodal__add-btn"
+            onClick={handleConfirm}
+            disabled={product.variants?.length > 0 && !selectedVariant}
+            id={`modal-add-${product._id}`}
           >
-            <ShoppingCart size={13} />
-            {displayPrice > 0 ? `Add ₹${displayPrice.toFixed(0)}` : 'Add'}
+            <ShoppingCart size={16} />
+            Add{total > 0 ? ` ₹${total.toFixed(0)}` : ''}
           </button>
         </div>
       </div>
     </div>
+  );
+}
+
+/* ─── Main product card — Swiggy-style horizontal layout ─── */
+export default function ProductCard({ product, onAddToCart }) {
+  const [showModal, setShowModal] = useState(false);
+  const isUnavailable = product.availability === 'UNAVAILABLE';
+  const hasCustomisation = product.variants?.length > 0 || product.addons?.length > 0;
+
+  const catKey = (product.category || '').toLowerCase().trim();
+  const imgSrc = product.image || CAT_IMG[catKey] || DEFAULT_IMG;
+  const basePrice = product.variants?.length > 0 ? product.variants[0].price : null;
+
+  const handleAdd = () => {
+    if (isUnavailable) return;
+    if (hasCustomisation) {
+      setShowModal(true);
+    } else {
+      onAddToCart({ product: product._id, productName: product.name, quantity: 1 });
+    }
+  };
+
+  return (
+    <>
+      <div
+        className={`pc-card${isUnavailable ? ' pc-card--disabled' : ''}`}
+        id={`product-${product._id}`}
+      >
+        {/* LEFT — text info */}
+        <div className="pc-card__left">
+          <span className="pc-card__veg-dot" />
+          <h3 className="pc-card__name">{product.name}</h3>
+          {basePrice !== null && (
+            <div className="pc-card__price">₹{basePrice}</div>
+          )}
+          {product.description && (
+            <p className="pc-card__desc">{product.description}</p>
+          )}
+          {isUnavailable && (
+            <span className="pc-card__unavailable">Currently unavailable</span>
+          )}
+        </div>
+
+        {/* RIGHT — image + ADD overlay */}
+        <div className="pc-card__right">
+          <div className="pc-card__img-wrap">
+            <img
+              src={imgSrc}
+              alt={product.name}
+              className="pc-card__img"
+              loading="lazy"
+              onError={(e) => {
+                const fallback = CAT_IMG[catKey] || DEFAULT_IMG;
+                if (e.currentTarget.src !== fallback) e.currentTarget.src = fallback;
+              }}
+            />
+            {!isUnavailable && (
+              <button
+                className="pc-card__add-btn"
+                onClick={handleAdd}
+                id={`add-to-cart-${product._id}`}
+              >
+                <span>ADD</span>
+                <Plus size={13} strokeWidth={3} />
+              </button>
+            )}
+          </div>
+          {hasCustomisation && !isUnavailable && (
+            <span className="pc-card__customisable">customisable</span>
+          )}
+        </div>
+      </div>
+
+      {showModal && (
+        <CustomiseModal
+          product={product}
+          imgSrc={imgSrc}
+          onClose={() => setShowModal(false)}
+          onConfirm={onAddToCart}
+        />
+      )}
+    </>
   );
 }

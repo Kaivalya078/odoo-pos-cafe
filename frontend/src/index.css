@@ -4627,3 +4627,828 @@ ul, ol {
   .ts-grid { grid-template-columns: 1fr 1fr; }
 }
 
+/* ================================================================
+   SWIGGY-STYLE PRODUCT CARD — .pc-card
+   Horizontal: text left, image+ADD right
+   ================================================================ */
+
+.order-products-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+/* The card row */
+.pc-card {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-md);
+  padding: var(--space-md);
+  background: var(--card-bg);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.18);
+  transition: opacity var(--transition-fast), box-shadow var(--transition-fast), border-color var(--transition-fast);
+}
+
+.pc-card:hover {
+  border-color: var(--accent);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.22);
+}
+
+.pc-card--disabled {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+/* Left column — text */
+.pc-card__left {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* Veg indicator square */
+.pc-card__veg-dot {
+  display: inline-block;
+  width: 15px;
+  height: 15px;
+  border: 2px solid var(--status-open);
+  border-radius: 3px;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.pc-card__veg-dot::after {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  border-radius: 50%;
+  background: var(--status-open);
+}
+
+.pc-card__name {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.3;
+}
+
+.pc-card__price {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.pc-card__desc {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.45;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.pc-card__unavailable {
+  display: inline-block;
+  width: fit-content;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--status-closed);
+  background: var(--status-closed-bg);
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+/* Right column — image + ADD */
+.pc-card__right {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+  width: 120px;
+}
+
+.pc-card__img-wrap {
+  position: relative;
+  width: 120px;
+  height: 100px;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.35);
+}
+
+.pc-card__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* ADD button — pinned to bottom of image */
+.pc-card__add-btn {
+  position: absolute;
+  bottom: 7px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 8px 18px;
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  background: var(--bg-surface);
+  color: var(--accent);
+  border: none;
+  cursor: pointer;
+  white-space: nowrap;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.pc-card__add-btn:hover {
+  transform: translateX(-50%) scale(1.06);
+  box-shadow: 0 4px 18px rgba(0,0,0,0.55);
+}
+
+.pc-card__add-btn:active {
+  transform: translateX(-50%) scale(0.97);
+}
+
+.pc-card__customisable {
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-top: 5px;
+  text-align: center;
+  letter-spacing: 0.2px;
+}
+
+/* ================================================================
+   CUSTOMISE POPUP MODAL — .pmodal
+   Bottom sheet on mobile, centred dialog on desktop
+   ================================================================ */
+
+.pmodal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.65);
+  backdrop-filter: blur(5px);
+  z-index: 200;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  animation: pOverlayIn 0.2s ease;
+}
+
+@keyframes pOverlayIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.pmodal {
+  width: 100%;
+  max-width: 480px;
+  background: var(--bg-surface);
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  /* Hard cap: always a bottom half-sheet, never taller than 50% of screen */
+  max-height: 52vh;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: pModalUp 0.28s cubic-bezier(0.32,0.72,0,1);
+}
+
+@keyframes pModalUp {
+  from { transform: translateY(100%); opacity: 0.6; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+/* Hero image */
+/* No hero image in the compact modal — save vertical space */
+.pmodal__image-wrap { display: none; }
+.pmodal__image     { display: none; }
+
+/* Handle bar row — top of the bottom sheet */
+.pmodal__handle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-sm) var(--space-md) var(--space-xs);
+  flex-shrink: 0;
+  position: relative;
+}
+
+.pmodal__handle {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 36px;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--border-default);
+}
+
+/* Close button repositioned to top-right of the handle row */
+.pmodal__close {
+  margin-left: auto;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--bg-hover);
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border: none;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+.pmodal__close:hover { background: var(--bg-active); color: var(--text-primary); }
+
+/* Scrollable content — must scroll inside the fixed modal height */
+.pmodal__body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 0 var(--space-md) var(--space-sm);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.pmodal__name {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.2px;
+  line-height: 1.25;
+}
+
+.pmodal__desc {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Section groups */
+.pmodal__section {
+  margin-top: var(--space-sm);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.pmodal__section-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-primary);
+  padding: 10px var(--space-md);
+  border-bottom: 1px solid var(--border-default);
+  background: var(--bg-hover);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pmodal__optional {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--text-muted);
+  background: var(--bg-elevated);
+  padding: 2px 7px;
+  border-radius: 4px;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+/* ── Variant chips — horizontal wrapping row ── */
+.pmodal__chips-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+  padding: var(--space-sm) var(--space-md);
+}
+
+/* ── Addon chips — single horizontal scrollable strip ── */
+.pmodal__chips-scroll {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: var(--space-xs);
+  padding: var(--space-sm) var(--space-md);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.pmodal__chips-scroll::-webkit-scrollbar { display: none; }
+
+/* ── Shared chip button ── */
+.pmodal__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 12px;
+  border-radius: 999px;
+  border: 1.5px solid var(--border-default);
+  background: var(--bg-elevated);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.pmodal__chip:hover {
+  border-color: var(--accent);
+  background: var(--accent-muted);
+}
+
+.pmodal__chip--active {
+  border-color: var(--accent);
+  background: var(--accent-muted);
+}
+
+.pmodal__chip-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.pmodal__chip-price {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.pmodal__chip--active .pmodal__chip-name,
+.pmodal__chip--active .pmodal__chip-price {
+  color: var(--accent);
+}
+
+.pmodal__chip-check {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--accent);
+}
+
+/* ── Addon chip gets a slightly different shape ── */
+.pmodal__chip--addon {
+  border-radius: var(--radius-md);
+}
+
+
+
+/* Options (variant row / addon row) */
+.pmodal__option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: 9px var(--space-md); /* tighter rows */
+  cursor: pointer;
+  border-bottom: 1px solid var(--border-subtle);
+  transition: background var(--transition-fast);
+}
+
+.pmodal__option:last-child { border-bottom: none; }
+.pmodal__option:hover { background: var(--bg-hover); }
+.pmodal__option--active { background: var(--accent-muted); }
+
+/* Radio */
+.pmodal__option-radio {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid var(--border-default);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color var(--transition-fast);
+}
+
+.pmodal__option--active .pmodal__option-radio { border-color: var(--accent); }
+
+.pmodal__option-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+/* Checkbox */
+.pmodal__option-check {
+  width: 20px;
+  height: 20px;
+  border-radius: 5px;
+  border: 2px solid var(--border-default);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 800;
+  transition: all var(--transition-fast);
+}
+
+.pmodal__option-check--on {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.pmodal__option-name {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.pmodal__option-price {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+/* Footer */
+.pmodal__footer {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-sm) var(--space-lg);
+  border-top: 1px solid var(--border-default);
+  background: var(--bg-surface);
+  flex-shrink: 0;
+}
+
+.pmodal__qty-control {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  padding: 4px;
+  flex-shrink: 0;
+}
+
+.pmodal__qty-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  cursor: pointer;
+  border: none;
+  background: none;
+  transition: all var(--transition-fast);
+}
+
+.pmodal__qty-btn:hover:not(:disabled) {
+  background: var(--accent-muted);
+  color: var(--accent);
+}
+
+.pmodal__qty-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+.pmodal__qty-value {
+  min-width: 30px;
+  text-align: center;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.pmodal__add-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px;
+  border-radius: var(--radius-lg);
+  font-size: 15px;
+  font-weight: 700;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  transition: background var(--transition-fast), transform var(--transition-fast);
+}
+
+.pmodal__add-btn:hover:not(:disabled) {
+  background: var(--accent-hover);
+  transform: translateY(-1px);
+}
+
+.pmodal__add-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* Desktop: keep as bottom sheet, just widen slightly */
+@media (min-width: 560px) {
+  .pmodal { max-width: 420px; }
+  .pmodal-overlay { align-items: flex-end; }
+}
+
+/* ================================================================
+   LIGHT MODE — scoped to .mobile-page (customer-facing pages only)
+   Follows device OS preference via prefers-color-scheme: light.
+   Staff pages (/admin, /owner, /kitchen, /cashier, /login) are
+   NOT wrapped in .mobile-page and are always dark.
+   ================================================================ */
+
+@media (prefers-color-scheme: light) {
+
+  /* ── Design token overrides inside the customer shell ── */
+  .mobile-page,
+  .order-page {
+    /* Backgrounds */
+    --bg-base:      #f4f4f5;
+    --bg-secondary: #ebebee;
+    --bg-surface:   #ffffff;
+    --bg-elevated:  #f9f9fb;
+    --bg-hover:     #f0f0f3;
+    --bg-active:    #e8e8ed;
+    --card-bg:      #ffffff;
+
+    /* Text */
+    --text-primary:   #18181b;
+    --text-secondary: #52525b;
+    --text-muted:     #a1a1aa;
+    --text-inverse:   #ffffff;
+
+    /* Borders */
+    --border:         #e4e4e7;
+    --border-default: #e4e4e7;
+    --border-subtle:  #f0f0f3;
+
+    /* Accent stays the same — purple works on both modes */
+    --accent:       #7c7ff2;
+    --accent-hover: #6b6ee0;
+    --accent-muted: rgba(124, 127, 242, 0.11);
+
+    /* Status colours */
+    --status-open-bg:   rgba(34, 197, 94, 0.10);
+    --status-closed-bg: rgba(239, 68, 68, 0.10);
+    --danger-bg:        rgba(239, 68, 68, 0.08);
+  }
+
+  /* ── Root page shell ── */
+  .mobile-page {
+    background: var(--bg-base);
+    color: var(--text-primary);
+  }
+
+  .order-page {
+    background: var(--bg-base);
+    color: var(--text-primary);
+  }
+
+  /* Bleed bg on desktop when mobile page is centred */
+  body:has(.mobile-page),
+  body:has(.order-page) {
+    background: #e0e0e5;
+  }
+
+  /* ── Sticky headers ── */
+  .mobile-header,
+  .order-mobile-header {
+    background: rgba(255, 255, 255, 0.92);
+    -webkit-backdrop-filter: blur(16px);
+    backdrop-filter: blur(16px);
+    border-bottom-color: var(--border-default);
+    box-shadow: 0 1px 0 rgba(0, 0, 0, 0.06);
+  }
+
+  /* ── Category chips bar ── */
+  .category-chips-wrapper {
+    background: rgba(244, 244, 245, 0.94);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+    border-bottom-color: var(--border-default);
+  }
+
+  .category-chip {
+    background: #ffffff;
+    border-color: #e4e4e7;
+    color: var(--text-secondary);
+  }
+
+  .category-chip--active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+
+  /* ── Product card (Swiggy-style) ── */
+  .pc-card {
+    background: #ffffff;
+    border-color: #e4e4e7;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06), 0 4px 12px rgba(0, 0, 0, 0.04);
+  }
+
+  .pc-card:hover {
+    border-color: var(--accent);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.10);
+  }
+
+  /* ADD pill: stays dark so it reads over any photo */
+  .pc-card__add-btn {
+    background: #1a1d21;
+    color: #a5b4fc;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.22);
+  }
+
+  .pc-card__add-btn:hover {
+    background: #262b31;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.28);
+  }
+
+  /* ── Table selection cards ── */
+  .ts-table-card {
+    background: var(--card-bg);
+    border-color: var(--border-default);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+  }
+
+  .ts-table-card--free:hover {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  }
+
+  /* ── Bottom-sheet cart ── */
+  .cart-sheet {
+    background: var(--bg-surface);
+    box-shadow: 0 -6px 30px rgba(0, 0, 0, 0.10);
+  }
+
+  .cart-sheet-footer {
+    background: var(--bg-surface);
+    border-top-color: var(--border-default);
+  }
+
+  .cart-backdrop {
+    background: rgba(0, 0, 0, 0.30);
+  }
+
+  /* ── Customise bottom-sheet modal ── */
+  .pmodal {
+    background: var(--bg-surface);
+    box-shadow: 0 -6px 30px rgba(0, 0, 0, 0.10);
+  }
+
+  .pmodal-overlay {
+    background: rgba(0, 0, 0, 0.30);
+  }
+
+  .pmodal__section {
+    background: var(--bg-elevated);
+    border-color: var(--border-default);
+  }
+
+  .pmodal__section-title {
+    background: var(--bg-hover);
+    border-bottom-color: var(--border-default);
+  }
+
+  .pmodal__chip {
+    background: var(--bg-elevated);
+    border-color: #e4e4e7;
+  }
+
+  .pmodal__chip:hover {
+    border-color: var(--accent);
+    background: var(--accent-muted);
+  }
+
+  .pmodal__chip--active {
+    border-color: var(--accent);
+    background: var(--accent-muted);
+  }
+
+  .pmodal__footer {
+    background: var(--bg-surface);
+    border-top-color: var(--border-default);
+  }
+
+  .pmodal__qty-control {
+    background: var(--bg-elevated);
+    border-color: var(--border-default);
+  }
+
+  .pmodal__close {
+    background: var(--bg-hover);
+    color: var(--text-secondary);
+  }
+
+  .pmodal__close:hover {
+    background: var(--bg-active);
+    color: var(--text-primary);
+  }
+
+  /* ── Public Menu ── */
+  .pm-item-card {
+    background: var(--bg-surface);
+    border-color: var(--border-default);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+  }
+
+  .pm-item-card:hover {
+    border-color: var(--accent);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.07);
+  }
+
+  .pm-variant-row {
+    background: var(--bg-elevated);
+  }
+
+  /* ── Booking page ── */
+  .bk-date-card {
+    background: var(--bg-surface);
+    border-color: var(--border-default);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+  }
+
+  .bk-success-card {
+    background: var(--bg-surface);
+    border-color: var(--border-default);
+    box-shadow: 0 1px 8px rgba(0, 0, 0, 0.06);
+  }
+
+  /* Slot buttons (AvailabilityGrid) */
+  .slot-btn {
+    background: var(--bg-elevated);
+    border-color: var(--border-default);
+    color: var(--text-primary);
+  }
+
+  .slot-btn--selected {
+    background: var(--accent-muted);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .slot-btn--unavailable {
+    background: var(--bg-hover);
+    color: var(--text-muted);
+    border-color: var(--border-subtle);
+  }
+
+  /* ── Order success card ── */
+  .order-success {
+    background: var(--bg-surface);
+    border-color: var(--border-default);
+    box-shadow: 0 2px 16px rgba(0, 0, 0, 0.07);
+  }
+
+  .order-success-details {
+    background: var(--bg-elevated);
+    border-color: var(--border-default);
+  }
+
+  /* ── Form inputs ── */
+  .mobile-page .form-input,
+  .order-page .form-input {
+    background: var(--bg-elevated);
+    border-color: var(--border-default);
+    color: var(--text-primary);
+  }
+
+  .mobile-page .form-input:focus,
+  .order-page .form-input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-muted);
+  }
+
+  /* ── Loading spinner ── */
+  .mobile-page .loading-spinner,
+  .order-page .loading-spinner {
+    background: var(--bg-base);
+  }
+
+  /* ── Logo icon ── */
+  .mobile-page .mobile-logo-icon {
+    background: var(--accent-muted);
+    color: var(--accent);
+  }
+
+  /* ── Menu footer ── */
+  .menu-footer {
+    color: var(--text-muted);
+    border-top-color: var(--border-default);
+  }
+}
