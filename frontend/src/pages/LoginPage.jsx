@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { login as loginApi } from '../services/authService';
 import { LogIn } from 'lucide-react';
+import { useEffect } from 'react';
 
 const ROLE_REDIRECT = {
   OWNER: '/owner',
@@ -21,10 +22,11 @@ export default function LoginPage() {
   const [submitting, setSubmitting] = useState(false);
 
   // If already logged in, redirect
-  if (isAuthenticated && user) {
-    navigate(ROLE_REDIRECT[user.role] || '/login', { replace: true });
-    return null;
-  }
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      navigate(ROLE_REDIRECT[user.role] || '/login', { replace: true });
+    }
+  }, [isAuthenticated, user, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
