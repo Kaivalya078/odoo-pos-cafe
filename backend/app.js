@@ -1,4 +1,5 @@
 const express = require('express');
+const cors = require('cors');
 const { notFound, errorHandler } = require('./middleware/errorMiddleware');
 const authRoutes = require('./routes/authRoutes');
 const restaurantRoutes = require('./routes/restaurantRoutes');
@@ -14,6 +15,13 @@ const reportRoutes = require('./routes/reportRoutes');
 const bookingRoutes = require('./routes/bookingRoutes');
 
 const app = express();
+
+// CORS — allow all origins (required for LAN / mobile access)
+app.use(cors({
+  origin: '*',
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+}));
 
 // Body parsing
 app.use(express.json());
