@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { getPublicMenu, createOrder } from '../services/orderService';
-import { Coffee, ArrowLeft, CheckCircle, ShoppingBag } from 'lucide-react';
+import { Coffee, CheckCircle, ShoppingBag } from 'lucide-react';
 import WarningBanner from '../components/WarningBanner';
 import toast from 'react-hot-toast';
 import ProductCard from '../components/ProductCard';
@@ -191,9 +191,6 @@ export default function OrderPage() {
     <div className="order-page order-page--mobile">
       {/* Sticky Header */}
       <header className="order-mobile-header">
-        <button className="btn-icon" onClick={() => navigate('/tables')} aria-label="Back">
-          <ArrowLeft size={18} />
-        </button>
         <div className="order-header-brand">
           <Coffee size={18} />
           <span>POS Cafe</span>
@@ -229,7 +226,7 @@ export default function OrderPage() {
           categories.map((cat) => (
             <section key={cat} id={`cat-section-${cat}`} className="order-menu-category">
               <h2 className="menu-category-title">{cat}</h2>
-              <div className="order-products-grid">
+              <div className="order-products-list">
                 {menu[cat].map((product) => (
                   <ProductCard key={product._id} product={product} onAddToCart={addToCart} />
                 ))}
