@@ -7,6 +7,8 @@ const restaurantSchema = new mongoose.Schema(
       enum: ['OPEN', 'CLOSED'],
       default: 'CLOSED',
     },
+    openingHour: { type: Number, default: 9, min: 0, max: 23 },
+    closingHour: { type: Number, default: 22, min: 1, max: 24 },
   },
   { timestamps: true }
 );
