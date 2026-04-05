@@ -12,3 +12,11 @@ export const getKitchenOrders = () => api.get('/kitchen/orders');
 // Response: { success, data: Order }
 export const updateItemPrepared = (orderId, itemId) =>
   api.patch(`/kitchen/orders/${orderId}/items/${itemId}`);
+
+// PATCH /api/kitchen/orders/:orderId/advance
+// Moves the entire order to the next status in one action:
+//   APPROVED → PREPARING  (all items set to fully prepared)
+//   PREPARING → PREPARED  (all items set to fully prepared)
+// Response: { success, data: Order }
+export const advanceOrder = (orderId) =>
+  api.patch(`/kitchen/orders/${orderId}/advance`);

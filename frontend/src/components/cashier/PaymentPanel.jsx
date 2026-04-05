@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import {
   Banknote, CreditCard, Smartphone, CheckCircle,
-  Loader2, IndianRupee, ArrowLeft, ShieldCheck,
+  Loader2, IndianRupee, ArrowLeft, ShieldCheck, Wallet,
 } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import {
@@ -51,7 +51,19 @@ const METHODS = [
   },
 ];
 
-export default function PaymentPanel({ sessionId, totalAmount, allPrepared, onPaymentComplete }) {
+// totalAmount      — effective total (after cashback)
+// originalTotal    — pre-cashback grand total
+// cashbackApplied  — total cashback being redeemed
+// cashbackRedemptions — array [{ mobile, amountToRedeem }]
+export default function PaymentPanel({
+  sessionId,
+  totalAmount,
+  originalTotal,
+  cashbackApplied = 0,
+  allPrepared,
+  cashbackRedemptions = [],
+  onPaymentComplete,
+}) {
   // 'idle' | 'processing' | 'upi-qr' | 'card-processing'
   const [state, setState] = useState('idle');
   const [processingMethod, setProcessingMethod] = useState(null);
@@ -64,7 +76,7 @@ export default function PaymentPanel({ sessionId, totalAmount, allPrepared, onPa
     setState('processing');
     setProcessingMethod('CASH');
     try {
-      const res = await paySession(sessionId, 'CASH');
+      const res = await paySession(sessionId, 'CASH', cashbackRedemptions);
       toast.success(`Cash payment of ₹${res.data.data.totalPaid?.toFixed(2)} received!`);
       reset();
       onPaymentComplete();
@@ -79,7 +91,7 @@ export default function PaymentPanel({ sessionId, totalAmount, allPrepared, onPa
     setState('processing');
     setProcessingMethod('UPI');
     try {
-      const res = await paySession(sessionId, 'UPI');
+      const res = await paySession(sessionId, 'UPI', cashbackRedemptions);
       setUpiData({ upiUrl: res.data.data.upiUrl, amount: res.data.data.amount });
       setState('upi-qr');
       setProcessingMethod(null);
@@ -93,7 +105,7 @@ export default function PaymentPanel({ sessionId, totalAmount, allPrepared, onPa
     setState('processing');
     setProcessingMethod('UPI');
     try {
-      const res = await confirmPayment(sessionId);
+      const res = await confirmPayment(sessionId, cashbackRedemptions);
       toast.success(`UPI payment of ₹${res.data.data.totalPaid?.toFixed(2)} confirmed!`);
       reset();
       onPaymentComplete();
@@ -135,6 +147,7 @@ export default function PaymentPanel({ sessionId, totalAmount, allPrepared, onPa
               razorpay_order_id: response.razorpay_order_id,
               razorpay_payment_id: response.razorpay_payment_id,
               razorpay_signature: response.razorpay_signature,
+              cashbackRedemptions,
             });
             toast.success(`Card payment of ₹${verifyRes.data.data.totalPaid?.toFixed(2)} successful!`);
             reset();
@@ -154,7 +167,6 @@ export default function PaymentPanel({ sessionId, totalAmount, allPrepared, onPa
 
       const rzp = new window.Razorpay(options);
       rzp.open();
-      // Don't reset state here — handler / ondismiss will call reset
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to initiate card payment');
       reset();
@@ -193,6 +205,12 @@ export default function PaymentPanel({ sessionId, totalAmount, allPrepared, onPa
             <IndianRupee size={18} />
             <span>{upiData.amount.toFixed(2)}</span>
           </div>
+          {cashbackApplied > 0 && (
+            <div className="cs-payment__cashback-note">
+              <Wallet size={12} />
+              Includes ₹{cashbackApplied.toFixed(2)} cashback deduction
+            </div>
+          )}
         </div>
 
         <div className="cs-payment__qr-actions">
@@ -286,12 +304,20 @@ export default function PaymentPanel({ sessionId, totalAmount, allPrepared, onPa
         ))}
       </div>
 
+      {/* Amount due row — shows effective total and cashback note */}
       <div className="cs-payment__total-row">
         <span>Amount due</span>
-        <span className="cs-payment__total-value">
-          <IndianRupee size={14} />
-          {totalAmount.toFixed(2)}
-        </span>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 2 }}>
+          {cashbackApplied > 0 && (
+            <span className="cs-payment__cashback-deduct">
+              <Wallet size={11} /> −₹{cashbackApplied.toFixed(2)} cashback
+            </span>
+          )}
+          <span className="cs-payment__total-value">
+            <IndianRupee size={14} />
+            {totalAmount.toFixed(2)}
+          </span>
+        </div>
       </div>
     </div>
   );

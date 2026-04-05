@@ -1,5 +1,6 @@
+import { useState } from 'react';
 import OrderItem from './OrderItem';
-import { Clock, CheckCircle2, Flame } from 'lucide-react';
+import { Clock, CheckCircle2, Flame, ChevronsRight, Loader2 } from 'lucide-react';
 
 const STATUS_CONFIG = {
   APPROVED: { label: 'To Cook', icon: Clock, modifier: 'approved' },
@@ -7,7 +8,15 @@ const STATUS_CONFIG = {
   PREPARED: { label: 'Completed', icon: CheckCircle2, modifier: 'prepared' },
 };
 
-export default function OrderCard({ order, onPrepare }) {
+// What the advance button says based on current status
+const ADVANCE_LABEL = {
+  APPROVED: 'Move to Preparing',
+  PREPARING: 'Mark All Prepared',
+};
+
+export default function OrderCard({ order, onPrepare, onAdvance }) {
+  const [advancing, setAdvancing] = useState(false);
+
   const config = STATUS_CONFIG[order.status] || STATUS_CONFIG.APPROVED;
   const StatusIcon = config.icon;
 
@@ -19,9 +28,22 @@ export default function OrderCard({ order, onPrepare }) {
   const totalPrepped = order.items.reduce((s, i) => s + i.preparedQuantity, 0);
   const progressPct = totalQty > 0 ? Math.round((totalPrepped / totalQty) * 100) : 0;
 
+  const canAdvance = onAdvance && ['APPROVED', 'PREPARING'].includes(order.status);
+
+  const handleAdvance = async (e) => {
+    e.stopPropagation();
+    if (advancing || !canAdvance) return;
+    setAdvancing(true);
+    try {
+      await onAdvance(order._id, order.status);
+    } finally {
+      setAdvancing(false);
+    }
+  };
+
   return (
     <div className={`kd-card kd-card--${config.modifier}`} id={`order-card-${order._id}`}>
-      {/* Card header */}
+      {/* Card header — contains ticket info + advance button */}
       <div className="kd-card__header">
         <div className="kd-card__ticket">
           <span className="kd-card__ticket-hash">#</span>
@@ -31,6 +53,24 @@ export default function OrderCard({ order, onPrepare }) {
           <StatusIcon size={12} />
           {config.label}
         </div>
+
+        {/* Advance whole order button */}
+        {canAdvance && (
+          <button
+            className={`kd-card__advance-btn${advancing ? ' kd-card__advance-btn--loading' : ''}`}
+            onClick={handleAdvance}
+            disabled={advancing}
+            title={ADVANCE_LABEL[order.status]}
+            id={`advance-order-${order._id}`}
+          >
+            {advancing ? (
+              <Loader2 size={12} className="kd-spin" />
+            ) : (
+              <ChevronsRight size={12} />
+            )}
+            {advancing ? 'Moving…' : ADVANCE_LABEL[order.status]}
+          </button>
+        )}
       </div>
 
       {/* Meta row */}
@@ -51,7 +91,7 @@ export default function OrderCard({ order, onPrepare }) {
         </div>
       )}
 
-      {/* Items list */}
+      {/* Items list — individual item ticking still works */}
       <div className="kd-card__items">
         {order.items.map((item) => (
           <OrderItem

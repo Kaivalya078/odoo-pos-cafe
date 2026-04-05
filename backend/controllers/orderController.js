@@ -35,11 +35,17 @@ const calculateItemTotal = (dbProduct, variant, addons, quantity) => {
 // @route   POST /api/orders
 // @access  Public (CUSTOMER)
 const createOrder = asyncHandler(async (req, res) => {
-  const { tableId, customerName, items } = req.body;
+  const { tableId, customerName, customerMobile, items } = req.body;
 
-  if (!tableId || !customerName || !items || items.length === 0) {
+  if (!tableId || !items || items.length === 0) {
     res.status(400);
-    throw new Error('tableId, customerName, and at least one item are required');
+    throw new Error('tableId and at least one item are required');
+  }
+
+  // Validate mobile if provided
+  if (customerMobile && !/^\d{10}$/.test(customerMobile)) {
+    res.status(400);
+    throw new Error('customerMobile must be exactly 10 digits');
   }
 
   // Check restaurant is open
@@ -106,12 +112,17 @@ const createOrder = asyncHandler(async (req, res) => {
     });
   }
 
+  const totalAmountFixed = parseFloat(totalAmount.toFixed(2));
+  const cashbackAmount = parseFloat((totalAmountFixed * 0.10).toFixed(2));
+
   const order = await Order.create({
     table: tableId,
     session: activeSession ? activeSession._id : null,
-    customerName,
+    customerName: customerName?.trim() || 'Customer',
+    customerMobile: customerMobile || null,
     items: orderItems,
-    totalAmount: parseFloat(totalAmount.toFixed(2)),
+    totalAmount: totalAmountFixed,
+    cashbackAmount,
   });
 
   res.status(201).json({ success: true, data: order, bookingWarning });

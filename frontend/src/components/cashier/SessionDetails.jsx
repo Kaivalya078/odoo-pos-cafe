@@ -1,4 +1,4 @@
-import { User, Package, IndianRupee, AlertTriangle } from 'lucide-react';
+import { IndianRupee, User, Package, AlertTriangle, Wallet } from 'lucide-react';
 
 const STATUS_LABEL = {
   PLACED: 'Placed',
@@ -16,7 +16,9 @@ const STATUS_CLASS = {
   REJECTED: 'cs-order-status--rejected',
 };
 
-export default function SessionDetails({ detail, loading }) {
+// cashbackRedemptions: { [mobile]: amountToRedeem }
+// onRedemptionChange: (mobile, amountToRedeem | null) => void
+export default function SessionDetails({ detail, loading, cashbackRedemptions = {}, onRedemptionChange }) {
   if (loading) {
     return (
       <div className="loading-spinner" style={{ minHeight: 300 }}>
@@ -34,7 +36,7 @@ export default function SessionDetails({ detail, loading }) {
     );
   }
 
-  const { session, orders, totalAmount } = detail;
+  const { session, orders, subtotal = 0, taxAmount = 0, grandTotal = 0, customerCashbacks = [] } = detail;
   const tableNumber = session?.table?.tableNumber || '—';
 
   // Group orders by customerName
@@ -45,9 +47,11 @@ export default function SessionDetails({ detail, loading }) {
     grouped[key].push(order);
   });
 
-  // Check if all orders are PREPARED (required for payment)
   const allPrepared = orders.length > 0 && orders.every((o) => o.status === 'PREPARED');
   const unpreparedCount = orders.filter((o) => o.status !== 'PREPARED' && o.status !== 'REJECTED').length;
+
+  // Total cashback being applied
+  const totalCashApplied = Object.values(cashbackRedemptions).reduce((s, v) => s + (v || 0), 0);
 
   return (
     <div className="cs-detail" id="cashier-session-detail">
@@ -84,6 +88,9 @@ export default function SessionDetails({ detail, loading }) {
               <div key={order._id} className="cs-order-card">
                 <div className="cs-order-card__header">
                   <span className="cs-order-card__id">#{order._id.slice(-4).toUpperCase()}</span>
+                  {order.customerMobile && (
+                    <span className="cs-order-card__mobile">📱 {order.customerMobile}</span>
+                  )}
                   <span className={`cs-order-status ${STATUS_CLASS[order.status] || ''}`}>
                     {STATUS_LABEL[order.status] || order.status}
                   </span>
@@ -121,6 +128,11 @@ export default function SessionDetails({ detail, loading }) {
                     <IndianRupee size={12} />
                     {order.totalAmount.toFixed(2)}
                   </span>
+                  {order.cashbackAmount > 0 && !order.cashbackCredited && (
+                    <span className="cs-order-card__cashback-pending">
+                      <Wallet size={11} /> ₹{order.cashbackAmount.toFixed(2)} cashback on next visit
+                    </span>
+                  )}
                 </div>
               </div>
             ))}
@@ -128,13 +140,98 @@ export default function SessionDetails({ detail, loading }) {
         ))}
       </div>
 
-      {/* Total bill */}
-      <div className="cs-detail__total">
-        <span>Total Bill</span>
-        <span className="cs-detail__total-amount">
-          <IndianRupee size={16} />
-          {totalAmount.toFixed(2)}
-        </span>
+      {/* Cashback redemption section */}
+      {customerCashbacks.length > 0 && (
+        <div className="cs-cashback-section">
+          <div className="cs-cashback-section__title">
+            <Wallet size={14} />
+            Customer Cashback
+          </div>
+          {customerCashbacks.map(({ mobile, cashBalance, redeemableBalance = cashBalance, lockedUntilTomorrow = false, orderTotal }) => {
+            const maxRedeemable = Math.min(redeemableBalance, grandTotal);
+            const isChecked = !!(cashbackRedemptions[mobile]);
+            const appliedAmount = cashbackRedemptions[mobile] || 0;
+
+            return (
+              <div key={mobile} className={`cs-cashback-row${isChecked ? ' cs-cashback-row--active' : ''}${lockedUntilTomorrow ? ' cs-cashback-row--locked' : ''}`}>
+                <label className="cs-cashback-row__label">
+                  <input
+                    type="checkbox"
+                    className="cs-cashback-checkbox"
+                    checked={isChecked}
+                    disabled={redeemableBalance <= 0 || maxRedeemable <= 0 || lockedUntilTomorrow}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        onRedemptionChange(mobile, maxRedeemable);
+                      } else {
+                        onRedemptionChange(mobile, null);
+                      }
+                    }}
+                    id={`cashback-cb-${mobile}`}
+                  />
+                  <div className="cs-cashback-row__info">
+                    <span className="cs-cashback-row__mobile">📱 {mobile}</span>
+                    <span className="cs-cashback-row__balance">
+                      Balance: <strong>₹{cashBalance.toFixed(2)}</strong>
+                    </span>
+                  </div>
+                  {isChecked && (
+                    <span className="cs-cashback-row__applied">
+                      −₹{appliedAmount.toFixed(2)}
+                    </span>
+                  )}
+                </label>
+                {lockedUntilTomorrow && (
+                  <span className="cs-cashback-row__locked">🔒 Available from tomorrow</span>
+                )}
+                {!lockedUntilTomorrow && cashBalance <= 0 && (
+                  <span className="cs-cashback-row__empty">No balance</span>
+                )}
+              </div>
+            );
+          })}
+
+          {totalCashApplied > 0 && (
+            <div className="cs-cashback-total">
+              <span>Total Cashback Applied</span>
+              <span className="cs-cashback-total__val">−₹{totalCashApplied.toFixed(2)}</span>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Bill breakdown */}
+      <div className="cs-detail__bill-breakdown">
+        <div className="cs-detail__bill-row">
+          <span>Subtotal</span>
+          <span className="cs-detail__bill-val">
+            <IndianRupee size={12} />
+            {subtotal.toFixed(2)}
+          </span>
+        </div>
+        <div className="cs-detail__bill-row cs-detail__bill-row--tax">
+          <span>GST (5%)</span>
+          <span className="cs-detail__bill-val cs-detail__bill-val--tax">
+            <IndianRupee size={12} />
+            {taxAmount.toFixed(2)}
+          </span>
+        </div>
+        {totalCashApplied > 0 && (
+          <div className="cs-detail__bill-row cs-detail__bill-row--cashback">
+            <span>Cashback Applied</span>
+            <span className="cs-detail__bill-val cs-detail__bill-val--cashback">
+              −<IndianRupee size={12} />
+              {totalCashApplied.toFixed(2)}
+            </span>
+          </div>
+        )}
+        <div className="cs-detail__total">
+          <span>Grand Total</span>
+          <span className="cs-detail__total-amount">
+            <IndianRupee size={16} />
+            {Math.max(0, grandTotal - totalCashApplied).toFixed(2)}
+          </span>
+        </div>
       </div>
     </div>
   );

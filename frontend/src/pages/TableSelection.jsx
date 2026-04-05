@@ -12,6 +12,14 @@ export default function TableSelection() {
   const navigate = useNavigate();
   const pollRef = useRef(null);
 
+  // If the customer already picked a table this browser session, skip straight to ordering
+  useEffect(() => {
+    const savedTable = sessionStorage.getItem('pos_tableId');
+    if (savedTable) {
+      navigate(`/order?tableId=${savedTable}`, { replace: true });
+    }
+  }, [navigate]);
+
   useEffect(() => {
     const fetchTables = async (silent = false) => {
       if (!silent) setLoading(true);
@@ -34,7 +42,10 @@ export default function TableSelection() {
   const freeTables = tables.filter((t) => t.status === 'FREE');
   const occupiedTables = tables.filter((t) => t.status !== 'FREE');
 
-  const handleSelect = (tableId) => navigate(`/order?tableId=${tableId}`);
+  const handleSelect = (tableId) => {
+    sessionStorage.setItem('pos_tableId', tableId);
+    navigate(`/order?tableId=${tableId}`);
+  };
 
   if (loading) {
     return (

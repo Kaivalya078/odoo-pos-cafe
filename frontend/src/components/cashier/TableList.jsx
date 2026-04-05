@@ -36,7 +36,7 @@ export default function TableList({ sessions, selectedId, onSelect, loading }) {
               <span className="cs-table-item__number">Table {s.tableNumber}</span>
               <span className="cs-table-item__amount">
                 <IndianRupee size={13} />
-                {s.totalAmount.toFixed(2)}
+                {(s.grandTotal ?? s.totalAmount ?? 0).toFixed(2)}
               </span>
             </div>
             <div className="cs-table-item__meta">

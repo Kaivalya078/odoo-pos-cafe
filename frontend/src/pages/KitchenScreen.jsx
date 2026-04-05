@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { getKitchenOrders, updateItemPrepared } from '../services/kitchenService';
+import { getKitchenOrders, updateItemPrepared, advanceOrder } from '../services/kitchenService';
 import { getKitchenProducts, toggleAvailability } from '../services/productService';
 import OrderCard from '../components/kitchen/OrderCard';
 import { ChefHat, Search, RefreshCw, X, LayoutGrid, ShoppingBag } from 'lucide-react';
@@ -115,8 +115,28 @@ export default function KitchenScreen() {
       fetchOrders(true);
     }
   };
+  // ── Whole-order advance handler ───────────────────────────────────────────
+  const handleAdvanceOrder = async (orderId, currentStatus) => {
+    const nextLabel = currentStatus === 'APPROVED' ? 'Preparing' : 'Prepared';
+    try {
+      const res = await advanceOrder(orderId);
+      const raw = res.data.data;
+      const updatedOrder = {
+        ...raw,
+        items: (raw.items || []).map((item, idx) => ({
+          ...item,
+          _id: item._id || `fallback-${raw._id}-${idx}`,
+          preparedQuantity: item.preparedQuantity ?? 0,
+        })),
+      };
+      setOrders((prev) => prev.map((o) => (o._id === updatedOrder._id ? updatedOrder : o)));
+      toast.success(`Order #${orderId.slice(-4).toUpperCase()} → ${nextLabel}`);
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to advance order');
+      fetchOrders(true);
+    }
+  };
 
-  // ── Availability toggle ────────────────────────────────────────────────────
   const handleToggle = async (productId, productName, currentStatus) => {
     if (togglingId) return;
     setTogglingId(productId);
@@ -289,7 +309,7 @@ export default function KitchenScreen() {
           ) : (
             <div className="kd-grid">
               {filteredOrders.map((order) => (
-                <OrderCard key={order._id} order={order} onPrepare={handlePrepare} />
+                <OrderCard key={order._id} order={order} onPrepare={handlePrepare} onAdvance={handleAdvanceOrder} />
               ))}
             </div>
           )}

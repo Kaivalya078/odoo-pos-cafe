@@ -10,6 +10,7 @@ export default function Cart({
   placing,
   isOpen,
   onClose,
+  customerMobile,
 }) {
   const itemCount = items.reduce((sum, i) => sum + i.quantity, 0);
   const totalAmount = items.reduce((sum, item) => {
@@ -110,25 +111,29 @@ export default function Cart({
             </div>
           )}
 
-          {/* Name input */}
-          <div className="form-group" style={{ marginBottom: 'var(--space-sm)' }}>
-            <label className="form-label" htmlFor="customer-name">Your Name</label>
+          {/* Name input — optional */}
+          <div className="form-group" style={{ marginBottom: 'var(--space-xs)' }}>
+            <label className="form-label" htmlFor="customer-name">Your Name <span style={{ color: 'var(--text-muted)', fontSize: 11, fontWeight: 400 }}>(optional)</span></label>
             <input
               id="customer-name"
               className="form-input"
               type="text"
-              placeholder="Enter your name"
+              placeholder="Enter your name or skip"
               value={customerName}
               onChange={(e) => onCustomerNameChange(e.target.value)}
-              required
             />
           </div>
+          {customerMobile && (
+            <div style={{ fontSize: 12, color: 'var(--status-open)', marginBottom: 'var(--space-sm)', display: 'flex', alignItems: 'center', gap: 4 }}>
+              📱 Ordering as {customerMobile} · cashback will be credited after preparation
+            </div>
+          )}
 
           <button
             type="button"
             className="btn btn-primary order-place-btn"
             onClick={onPlaceOrder}
-            disabled={placing || items.length === 0 || !customerName.trim()}
+            disabled={placing || items.length === 0}
             id="place-order-btn"
           >
             {placing

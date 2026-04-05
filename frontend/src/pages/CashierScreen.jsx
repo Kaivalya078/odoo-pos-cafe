@@ -6,7 +6,7 @@ import PaymentPanel from '../components/cashier/PaymentPanel';
 import { CreditCard, RefreshCw } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-const POLL_INTERVAL = 10000; // 10 s — system-wide real-time standard
+const POLL_INTERVAL = 10000;
 
 export default function CashierScreen() {
   const [sessions, setSessions] = useState([]);
@@ -15,14 +15,14 @@ export default function CashierScreen() {
   const [loadingTables, setLoadingTables] = useState(true);
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const pollRef = useRef(null);
 
-  // Use a ref to track selectedId inside polling without adding it to useCallback deps.
-  // This prevents the interval from being torn down and recreated on every selection.
+  // Cashback redemption state: { [mobile]: amountToRedeem }
+  const [cashbackRedemptions, setCashbackRedemptions] = useState({});
+
+  const pollRef = useRef(null);
   const selectedIdRef = useRef(null);
   selectedIdRef.current = selectedId;
 
-  // ── Fetch table list ────────────────────────────────────────────────────────
   const fetchTables = useCallback(async (silent = false) => {
     if (!silent) setLoadingTables(true);
     else setRefreshing(true);
@@ -30,12 +30,10 @@ export default function CashierScreen() {
       const res = await getTables();
       const data = res.data.data || [];
       setSessions(data);
-
-      // If the currently-selected session has been paid/closed,
-      // clear it. Use the ref so this callback stays stable.
       if (selectedIdRef.current && !data.some((s) => s.sessionId === selectedIdRef.current)) {
         setSelectedId(null);
         setSessionDetail(null);
+        setCashbackRedemptions({});
       }
     } catch (err) {
       if (!silent) toast.error('Failed to load cashier tables');
@@ -43,16 +41,14 @@ export default function CashierScreen() {
       setLoadingTables(false);
       setRefreshing(false);
     }
-  }, []); // stable — no deps that change
+  }, []);
 
-  // Initial fetch + polling (runs only once since fetchTables is stable)
   useEffect(() => {
     fetchTables();
     pollRef.current = setInterval(() => fetchTables(true), POLL_INTERVAL);
     return () => clearInterval(pollRef.current);
   }, [fetchTables]);
 
-  // ── Fetch session details on selection ──────────────────────────────────────
   const fetchSessionDetail = useCallback(async (sessionId) => {
     setLoadingDetail(true);
     try {
@@ -69,24 +65,44 @@ export default function CashierScreen() {
 
   const handleSelectTable = (sessionId) => {
     setSelectedId(sessionId);
+    setCashbackRedemptions({}); // Reset cashback on new selection
     fetchSessionDetail(sessionId);
   };
 
-  // ── Payment completed — refresh everything ─────────────────────────────────
   const handlePaymentComplete = () => {
     setSelectedId(null);
     setSessionDetail(null);
+    setCashbackRedemptions({});
     fetchTables();
   };
 
-  // ── Derive values from sessionDetail (authoritative from backend) ──────────
+  // Cashback redemption toggle from SessionDetails
+  const handleRedemptionChange = (mobile, amountToRedeem) => {
+    setCashbackRedemptions((prev) => {
+      const updated = { ...prev };
+      if (amountToRedeem == null || amountToRedeem <= 0) {
+        delete updated[mobile];
+      } else {
+        updated[mobile] = amountToRedeem;
+      }
+      return updated;
+    });
+  };
+
+  // Build redemptions array for payment API
+  const redemptionsArray = Object.entries(cashbackRedemptions).map(([mobile, amountToRedeem]) => ({
+    mobile,
+    amountToRedeem,
+  }));
+
   const orders = sessionDetail?.orders || [];
   const allPrepared = orders.length > 0 && orders.every((o) => o.status === 'PREPARED');
-  const totalAmount = sessionDetail?.totalAmount || 0;
+  const grandTotal = sessionDetail?.grandTotal || 0;
 
-  // Use the session's own _id from the loaded data — NOT selectedId.
-  // This guarantees the payment call always uses a real ObjectId, even if
-  // the UI selection state somehow lags behind.
+  // Effective total after cashback
+  const totalCashApplied = Object.values(cashbackRedemptions).reduce((s, v) => s + (v || 0), 0);
+  const effectiveGrandTotal = parseFloat(Math.max(0, grandTotal - totalCashApplied).toFixed(2));
+
   const sessionIdForPayment = sessionDetail?.session?._id ?? null;
 
   return (
@@ -131,13 +147,21 @@ export default function CashierScreen() {
 
         {/* Right: Session details + Payment */}
         <div className="cs-main">
-          <SessionDetails detail={sessionDetail} loading={loadingDetail} />
+          <SessionDetails
+            detail={sessionDetail}
+            loading={loadingDetail}
+            cashbackRedemptions={cashbackRedemptions}
+            onRedemptionChange={handleRedemptionChange}
+          />
 
           {sessionDetail && sessionIdForPayment && (
             <PaymentPanel
               sessionId={sessionIdForPayment}
-              totalAmount={totalAmount}
+              totalAmount={effectiveGrandTotal}
+              originalTotal={grandTotal}
+              cashbackApplied={totalCashApplied}
               allPrepared={allPrepared}
+              cashbackRedemptions={redemptionsArray}
               onPaymentComplete={handlePaymentComplete}
             />
           )}

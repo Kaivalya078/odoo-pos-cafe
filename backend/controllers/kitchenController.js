@@ -71,8 +71,45 @@ const updateItemPreparation = asyncHandler(async (req, res) => {
 
   await order.save();
 
+  // NOTE: Cashback is credited AFTER payment is completed (in cashierController).
+  // This ensures customers cannot redeem cashback earned on the current order.
+
   await order.populate('table', 'tableNumber');
   res.status(200).json({ success: true, data: order });
 });
 
-module.exports = { getKitchenOrders, updateItemPreparation };
+// @route   PATCH /api/kitchen/orders/:orderId/advance
+// @access  Private (KITCHEN)
+// Advances the entire order to the next status in one action:
+//   APPROVED  → sets all items preparedQuantity = quantity, status = PREPARING
+//   PREPARING → sets all items preparedQuantity = quantity, status = PREPARED
+const advanceOrder = asyncHandler(async (req, res) => {
+  const { orderId } = req.params;
+
+  const order = await Order.findById(orderId);
+  if (!order) { res.status(404); throw new Error('Order not found'); }
+
+  if (!['APPROVED', 'PREPARING'].includes(order.status)) {
+    res.status(409);
+    throw new Error(`Cannot advance an order with status '${order.status}'`);
+  }
+
+  // Determine next status
+  const nextStatus = order.status === 'APPROVED' ? 'PREPARING' : 'PREPARED';
+
+  // Mark all items as fully prepared
+  order.items.forEach((item) => {
+    item.preparedQuantity = item.quantity;
+  });
+  order.status = nextStatus;
+
+  await order.save();
+
+  // NOTE: Cashback is credited AFTER payment is completed (in cashierController).
+  // This ensures customers cannot redeem cashback earned on the current order.
+
+  await order.populate('table', 'tableNumber');
+  res.status(200).json({ success: true, data: order });
+});
+
+module.exports = { getKitchenOrders, updateItemPreparation, advanceOrder };

@@ -2274,7 +2274,64 @@ ul, ol {
   text-transform: uppercase;
 }
 
-/* ===== ORDER ITEM ===== */
+/* ===== ADVANCE WHOLE ORDER BUTTON ===== */
+.kd-card__advance-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  border: 1.5px solid var(--border-default);
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.kd-card--approved .kd-card__advance-btn {
+  border-color: rgba(255, 166, 43, 0.4);
+  color: #ffa62b;
+  background: rgba(255, 166, 43, 0.06);
+}
+
+.kd-card--approved .kd-card__advance-btn:hover:not(:disabled) {
+  background: rgba(255, 166, 43, 0.15);
+  border-color: #ffa62b;
+  transform: translateY(-1px);
+}
+
+.kd-card--preparing .kd-card__advance-btn {
+  border-color: rgba(63, 185, 80, 0.4);
+  color: var(--status-open);
+  background: rgba(63, 185, 80, 0.06);
+}
+
+.kd-card--preparing .kd-card__advance-btn:hover:not(:disabled) {
+  background: rgba(63, 185, 80, 0.15);
+  border-color: var(--status-open);
+  transform: translateY(-1px);
+}
+
+.kd-card__advance-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.kd-card__advance-btn--loading {
+  opacity: 0.7;
+}
+
+/* Reuse existing spin animation for the loader inside advance btn */
+.kd-spin {
+  animation: spin 0.8s linear infinite;
+}
+
+
 .kd-item {
   position: relative;
   display: flex;
@@ -3205,6 +3262,53 @@ ul, ol {
   font-weight: 800;
   color: var(--status-open);
   font-variant-numeric: tabular-nums;
+}
+
+/* ===== BILL BREAKDOWN (Subtotal / Tax / Grand Total) ===== */
+.cs-detail__bill-breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.cs-detail__bill-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-sm) var(--space-lg);
+  background: var(--bg-elevated);
+  font-size: 13px;
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.cs-detail__bill-row--tax {
+  background: rgba(255, 140, 0, 0.05);
+  color: #e07b00;
+  font-weight: 600;
+}
+
+.cs-detail__bill-val {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.cs-detail__bill-val--tax {
+  color: #e07b00;
+}
+
+/* Grand total row inside breakdown */
+.cs-detail__bill-breakdown .cs-detail__total {
+  border-radius: 0;
+  border: none;
+  border-top: 2px solid var(--border-default);
+  background: var(--bg-hover);
 }
 
 /* ===== PAYMENT PANEL ===== */
@@ -5926,4 +6030,685 @@ ul, ol {
     color: var(--text-muted);
     border-top-color: var(--border-default);
   }
+}
+
+/* ================================================================
+   PHASE 9 — LOYALTY SYSTEM (OTP Gate + Cashback)
+   ================================================================ */
+
+/* ── OTP GATE ─────────────────────────────────────────────────── */
+.otp-gate {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-lg);
+  background: var(--bg-base);
+}
+
+.otp-gate__card {
+  width: 100%;
+  max-width: 400px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-xl);
+  padding: var(--space-2xl) var(--space-xl);
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.12);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.otp-gate__brand {
+  text-align: center;
+  margin-bottom: var(--space-md);
+}
+
+.otp-gate__logo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  background: var(--accent-muted);
+  color: var(--accent);
+  margin-bottom: var(--space-sm);
+}
+
+.otp-gate__title {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -0.3px;
+  margin: 0;
+}
+
+.otp-gate__subtitle {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin: 4px 0 0;
+}
+
+.otp-gate__field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.otp-gate__label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.otp-gate__input {
+  width: 100%;
+  padding: 14px 16px;
+  border: 1.5px solid var(--border-default);
+  border-radius: var(--radius-md);
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  font-size: 18px;
+  font-weight: 600;
+  font-family: inherit;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  outline: none;
+  box-sizing: border-box;
+}
+
+.otp-gate__input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-muted);
+}
+
+.otp-gate__input--otp {
+  letter-spacing: 8px;
+  text-align: center;
+  font-size: 24px;
+}
+
+.otp-gate__btn {
+  width: 100%;
+  padding: 14px;
+  font-size: 15px;
+  font-weight: 700;
+  margin-top: var(--space-xs);
+}
+
+.otp-gate__mobile-display {
+  font-size: 14px;
+  color: var(--text-secondary);
+  text-align: center;
+  margin: 0;
+}
+
+.otp-gate__resend {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.otp-gate__resend-btn,
+.otp-gate__back-btn {
+  background: none;
+  border: none;
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+}
+
+.otp-gate__divider {
+  color: var(--border-default);
+}
+
+.otp-gate__skip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 12px;
+  cursor: pointer;
+  padding: var(--space-xs);
+  border-radius: var(--radius-sm);
+  transition: color var(--transition-fast);
+  margin-top: var(--space-xs);
+}
+
+.otp-gate__skip:hover { color: var(--text-secondary); }
+
+.otp-gate__cashback-info {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  background: rgba(63, 185, 80, 0.06);
+  border: 1px solid rgba(63, 185, 80, 0.15);
+  border-radius: var(--radius-md);
+  font-size: 12px;
+  color: var(--status-open);
+}
+
+/* ── ORDER PAGE MOBILE LAYOUT ─────────────────────────────────── */
+.order-page--mobile {
+  min-height: 100vh;
+  background: var(--bg-base);
+  display: flex;
+  flex-direction: column;
+}
+
+.order-mobile-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-sm) var(--space-md);
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border-default);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+
+.order-header-brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.order-header-table {
+  font-size: 12px;
+  font-weight: 700;
+  background: var(--accent-muted);
+  color: var(--accent);
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
+}
+
+.order-cashback-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 12px;
+  font-weight: 700;
+  background: rgba(63, 185, 80, 0.1);
+  color: var(--status-open);
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(63, 185, 80, 0.2);
+}
+
+.order-cashback-strip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: rgba(63, 185, 80, 0.05);
+  border-bottom: 1px solid rgba(63, 185, 80, 0.12);
+  font-size: 12px;
+  color: var(--status-open);
+  font-weight: 500;
+}
+
+/* Category chips */
+.category-chips-wrapper {
+  position: sticky;
+  top: 53px;
+  z-index: 90;
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border-default);
+}
+
+.category-chips {
+  display: flex;
+  gap: 6px;
+  padding: 10px 14px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.category-chips::-webkit-scrollbar { display: none; }
+
+.category-chip {
+  flex-shrink: 0;
+  padding: 5px 14px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-default);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.category-chip--active {
+  background: var(--accent-muted);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.order-menu-mobile {
+  flex: 1;
+  overflow-y: auto;
+  padding-bottom: 90px;
+}
+
+.order-menu-category {
+  padding: var(--space-md) var(--space-md) 0;
+}
+
+.menu-category-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin: 0 0 var(--space-sm);
+  padding-bottom: var(--space-xs);
+  border-bottom: 2px solid var(--accent-muted);
+}
+
+.order-products-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+/* Sticky cart bar */
+.sticky-cart-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 200;
+  padding: var(--space-sm) var(--space-md);
+  background: var(--bg-surface);
+  border-top: 1px solid var(--border-default);
+}
+
+.sticky-cart-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 14px 18px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-lg);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity var(--transition-fast);
+}
+
+.sticky-cart-btn:hover { opacity: 0.92; }
+
+.sticky-cart-left,
+.sticky-cart-right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.sticky-cart-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  background: rgba(255,255,255,0.25);
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+/* Order error page */
+.order-error-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  gap: var(--space-lg);
+  text-align: center;
+  padding: var(--space-xl);
+  color: var(--text-secondary);
+}
+
+/* ── CASH CHECK PAGE ──────────────────────────────────────────── */
+.cash-check-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-xl);
+  padding: var(--space-2xl) var(--space-xl);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--space-sm);
+  max-width: 400px;
+  margin: 0 auto;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+}
+
+.cash-check-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 72px;
+  height: 72px;
+  border-radius: 20px;
+  background: var(--accent-muted);
+  color: var(--accent);
+  margin-bottom: var(--space-xs);
+}
+
+.cash-check-title {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.cash-check-subtitle {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin: 0;
+  max-width: 280px;
+}
+
+.cash-check-error {
+  font-size: 13px;
+  color: var(--status-closed);
+  background: var(--status-closed-bg);
+  padding: 8px 12px;
+  border-radius: var(--radius-md);
+  width: 100%;
+  text-align: center;
+  margin: 0;
+}
+
+.cash-check-result {
+  width: 100%;
+  margin-top: var(--space-md);
+  padding: var(--space-xl) var(--space-lg);
+  border-radius: var(--radius-lg);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-default);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.cash-check-result--positive {
+  background: rgba(63, 185, 80, 0.06);
+  border-color: rgba(63, 185, 80, 0.2);
+}
+
+.cash-check-result--locked {
+  background: rgba(250, 173, 20, 0.06);
+  border-color: rgba(250, 173, 20, 0.3);
+}
+
+.cash-check-result__icon { color: var(--text-muted); }
+.cash-check-result--positive .cash-check-result__icon { color: var(--status-open); }
+
+.cash-check-result__amount {
+  font-size: 40px;
+  font-weight: 900;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -1px;
+}
+
+.cash-check-result--positive .cash-check-result__amount {
+  color: var(--status-open);
+}
+
+.cash-check-result__label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.cash-check-result__note {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin: 4px 0 0;
+  max-width: 220px;
+}
+
+.cash-check-result__icon--empty { opacity: 0.35; }
+
+.cash-check-how {
+  margin-top: var(--space-xl);
+  max-width: 400px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.cash-check-how__title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: var(--space-md);
+}
+
+.cash-check-how__step {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-sm) 0;
+  border-bottom: 1px solid var(--border-subtle);
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.cash-check-how__step:last-child { border-bottom: none; }
+
+.cash-check-step-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--accent-muted);
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+/* ── CASHIER CASHBACK SECTION ─────────────────────────────────── */
+.cs-cashback-section {
+  background: rgba(63, 185, 80, 0.04);
+  border: 1px solid rgba(63, 185, 80, 0.18);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.cs-cashback-section__title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--status-open);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.cs-cashback-row {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  padding: var(--space-sm) var(--space-md);
+}
+
+.cs-cashback-row--active {
+  background: rgba(63, 185, 80, 0.06);
+  border-color: rgba(63, 185, 80, 0.3);
+}
+
+.cs-cashback-row--locked {
+  background: rgba(250, 173, 20, 0.04);
+  border-color: rgba(250, 173, 20, 0.25);
+  opacity: 0.85;
+}
+
+.cs-cashback-row__locked {
+  font-size: 11px;
+  color: #b45309;
+  font-weight: 600;
+  margin-top: 4px;
+  display: block;
+  padding-left: 26px;
+}
+
+.cs-cashback-row__label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  cursor: pointer;
+  width: 100%;
+}
+
+.cs-cashback-checkbox {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--status-open);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.cs-cashback-row__info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.cs-cashback-row__mobile {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.cs-cashback-row__balance {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.cs-cashback-row__applied {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--status-open);
+  white-space: nowrap;
+}
+
+.cs-cashback-row__empty {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 2px;
+  display: block;
+}
+
+.cs-cashback-total {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: var(--space-sm);
+  border-top: 1px solid rgba(63, 185, 80, 0.2);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.cs-cashback-total__val {
+  color: var(--status-open);
+  font-weight: 800;
+}
+
+/* Bill row cashback variant */
+.cs-detail__bill-row--cashback {
+  background: rgba(63, 185, 80, 0.05);
+  color: var(--status-open);
+  font-weight: 600;
+}
+
+.cs-detail__bill-val--cashback {
+  color: var(--status-open);
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-weight: 700;
+}
+
+/* Order card mobile label */
+.cs-order-card__mobile {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+/* Cashback pending credit note on order card */
+.cs-order-card__cashback-pending {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11px;
+  color: var(--status-open);
+  font-weight: 600;
+  background: rgba(63, 185, 80, 0.08);
+  padding: 2px 7px;
+  border-radius: 4px;
+}
+
+/* Payment panel cashback deduct */
+.cs-payment__cashback-deduct {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11px;
+  color: var(--status-open);
+  font-weight: 600;
+}
+
+.cs-payment__cashback-note {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: var(--status-open);
+  background: rgba(63, 185, 80, 0.08);
+  padding: 5px 12px;
+  border-radius: var(--radius-sm);
 }

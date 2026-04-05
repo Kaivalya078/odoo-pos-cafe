@@ -37,9 +37,18 @@ const orderSchema = new mongoose.Schema(
     },
     customerName: {
       type: String,
-      required: [true, 'Customer name is required'],
       trim: true,
+      default: 'Customer',
     },
+    // Loyalty / cashback fields
+    customerMobile: {
+      type: String,
+      default: null,
+      match: [/^\d{10}$|^$/, 'Mobile must be exactly 10 digits'],
+    },
+    cashbackAmount: { type: Number, default: 0 },   // 10% of totalAmount, set on creation
+    cashbackCredited: { type: Boolean, default: false }, // true once kitchen marks PREPARED
+    cashUsed: { type: Number, default: 0 },          // cashback redeemed at payment time
     items: {
       type: [orderItemSchema],
       validate: [(arr) => arr.length > 0, 'Order must have at least one item'],

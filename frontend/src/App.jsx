@@ -14,6 +14,7 @@ import TableSelection from './pages/TableSelection';
 import OrderPage from './pages/OrderPage';
 import BookingPage from './pages/BookingPage';
 import AnalyticsPage from './pages/AnalyticsPage';
+import CashCheckPage from './pages/CashCheckPage';
 
 const ROLE_REDIRECT = {
   OWNER: '/owner',
@@ -62,6 +63,7 @@ export default function App() {
             <Route path="/tables" element={<TableSelection />} />
             <Route path="/order" element={<OrderPage />} />
             <Route path="/book" element={<BookingPage />} />
+            <Route path="/cash-check" element={<CashCheckPage />} />
 
             {/* Protected (with sidebar layout) */}
             <Route element={
