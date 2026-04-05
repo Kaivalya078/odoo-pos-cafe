@@ -98,6 +98,7 @@ const createOrder = asyncHandler(async (req, res) => {
     orderItems.push({
       product: dbProduct._id,
       name: dbProduct.name,
+      category: dbProduct.category || 'Uncategorised',
       variant: item.variant || { name: '', price: 0 },
       addons: item.addons || [],
       quantity: item.quantity,

@@ -135,21 +135,38 @@ const getTopProducts = asyncHandler(async (req, res) => {
 
 
 // @route   GET /api/admin/reports/category-revenue
-// @access  Private (OWNER)
+// @access  Private (OWNER, ADMIN)
 const getCategoryRevenue = asyncHandler(async (req, res) => {
   const data = await Order.aggregate([
     { $match: { paymentStatus: 'PAID' } },
     { $unwind: '$items' },
+    // Match by item name since product IDs in old orders may not match current product collection
+    {
+      $lookup: {
+        from: 'products',
+        let: { iname: { $toLower: '$items.name' } },
+        pipeline: [
+          { $match: { $expr: { $eq: [{ $toLower: '$name' }, '$$iname'] } } },
+          { $project: { _id: 0, category: 1 } },
+        ],
+        as: 'productInfo',
+      },
+    },
     {
       $group: {
-        _id: '$items.category',
+        _id: {
+          $ifNull: [
+            { $arrayElemAt: ['$productInfo.category', 0] },
+            'Uncategorised',
+          ],
+        },
         revenue: { $sum: '$items.itemTotal' },
       },
     },
     {
       $project: {
         _id: 0,
-        category: { $ifNull: ['$_id', 'Uncategorised'] },
+        category: '$_id',
         revenue: { $round: ['$revenue', 2] },
       },
     },
@@ -157,6 +174,7 @@ const getCategoryRevenue = asyncHandler(async (req, res) => {
   ]);
   res.status(200).json({ success: true, data });
 });
+
 
 // @route   GET /api/admin/reports/payment-breakdown
 // @access  Private (OWNER)

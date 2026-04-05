@@ -21,10 +21,10 @@ router.get('/reports/summary',   getRevenueSummary);
 router.get('/reports/top-products', getTopProducts);
 
 // Owner-only analytics
-router.get('/reports/category-revenue',  authorizeRoles('OWNER'), getCategoryRevenue);
-router.get('/reports/payment-breakdown', authorizeRoles('OWNER'), getPaymentBreakdown);
-router.get('/reports/hourly-revenue',    authorizeRoles('OWNER'), getHourlyRevenue);
-router.get('/reports/insights',          authorizeRoles('OWNER'), getInsights);
+router.get('/reports/category-revenue',  getCategoryRevenue);
+router.get('/reports/payment-breakdown', getPaymentBreakdown);
+router.get('/reports/hourly-revenue',    getHourlyRevenue);
+router.get('/reports/insights',          getInsights);
 
 module.exports = router;
 
