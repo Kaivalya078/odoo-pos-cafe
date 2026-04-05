@@ -7,8 +7,8 @@ const router = express.Router();
 // ── CUSTOMER routes ───────────────────────────────────────────────────────────
 router.post('/', createOrder);
 
-// ── ADMIN / OWNER routes ──────────────────────────────────────────────────────
-router.use(protect, authorizeRoles('ADMIN', 'OWNER'));
+// ── CASHIER / OWNER / ADMIN routes ───────────────────────────────────────────
+router.use(protect, authorizeRoles('CASHIER', 'OWNER', 'ADMIN'));
 router.get('/pending', getPendingOrders);
 router.patch('/:id/approve', approveOrder);
 router.patch('/:id/reject', rejectOrder);

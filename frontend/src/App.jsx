@@ -87,7 +87,7 @@ export default function App() {
                 </ProtectedRoute>
               } />
               <Route path="/kitchen" element={
-                <ProtectedRoute allowedRoles={['KITCHEN', 'OWNER']}>
+                <ProtectedRoute allowedRoles={['KITCHEN', 'OWNER', 'ADMIN']}>
                   <KitchenScreen />
                 </ProtectedRoute>
               } />

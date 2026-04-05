@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Plus, Minus, Package } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Plus, Minus, Package, Upload, X, Image } from 'lucide-react';
 
 const EMPTY_FORM = {
   name: '',
@@ -10,8 +10,11 @@ const EMPTY_FORM = {
   addons: [],
 };
 
+const MAX_FILE_SIZE = 512 * 1024; // 512 KB
+
 export default function AddProductForm({ onSubmit, editingProduct, onCancelEdit }) {
   const [form, setForm] = useState(EMPTY_FORM);
+  const fileInputRef = useRef(null);
   const [submitting, setSubmitting] = useState(false);
 
   const isEditing = !!editingProduct;
@@ -34,6 +37,27 @@ export default function AddProductForm({ onSubmit, editingProduct, onCancelEdit 
 
   const handleChange = (e) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+
+  // --- Image file → base64 ---
+  const handleImageFile = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > MAX_FILE_SIZE) {
+      alert(`Image is too large (${(file.size / 1024).toFixed(0)} KB). Please choose a file under 512 KB.`);
+      e.target.value = '';
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      setForm((prev) => ({ ...prev, image: reader.result }));
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const clearImage = () => {
+    setForm((prev) => ({ ...prev, image: '' }));
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   // --- Variant helpers ---
@@ -101,7 +125,10 @@ export default function AddProductForm({ onSubmit, editingProduct, onCancelEdit 
           .map((a) => ({ name: a.name.trim(), price: Number(a.price) || 0 })),
       };
       await onSubmit(payload, editingProduct?._id);
-      if (!isEditing) setForm(EMPTY_FORM);
+      if (!isEditing) {
+        setForm(EMPTY_FORM);
+        if (fileInputRef.current) fileInputRef.current.value = '';
+      }
     } finally {
       setSubmitting(false);
     }
@@ -144,7 +171,7 @@ export default function AddProductForm({ onSubmit, editingProduct, onCancelEdit 
           </div>
         </div>
 
-        {/* Row 2: Description + Image URL */}
+        {/* Row 2: Description + Image Upload */}
         <div className="form-row">
           <div className="form-group">
             <label className="form-label" htmlFor="product-description">Description</label>
@@ -159,16 +186,59 @@ export default function AddProductForm({ onSubmit, editingProduct, onCancelEdit 
             />
           </div>
           <div className="form-group">
-            <label className="form-label" htmlFor="product-image">Image URL</label>
-            <input
-              id="product-image"
-              className="form-input"
-              type="text"
-              name="image"
-              placeholder="https://... (optional)"
-              value={form.image}
-              onChange={handleChange}
-            />
+            <label className="form-label">Product Image</label>
+            <div className="img-upload-area">
+              {form.image ? (
+                /* ── Preview panel ── */
+                <div className="img-upload-preview">
+                  <img
+                    src={form.image}
+                    alt="Product preview"
+                    className="img-upload-thumb"
+                  />
+                  <div className="img-upload-actions">
+                    <button
+                      type="button"
+                      className="btn btn-secondary btn-sm"
+                      onClick={() => fileInputRef.current?.click()}
+                      id="product-image-change"
+                    >
+                      <Upload size={13} /> Change
+                    </button>
+                    <button
+                      type="button"
+                      className="btn-icon btn-icon--danger"
+                      onClick={clearImage}
+                      title="Remove image"
+                      id="product-image-remove"
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                /* ── Drop zone / pick button ── */
+                <button
+                  type="button"
+                  className="img-upload-btn"
+                  onClick={() => fileInputRef.current?.click()}
+                  id="product-image-pick"
+                >
+                  <Image size={24} style={{ opacity: 0.5 }} />
+                  <span className="img-upload-hint">Click to upload image</span>
+                  <span className="img-upload-sub">JPG, PNG, WEBP · max 512 KB</span>
+                </button>
+              )}
+              {/* Hidden real file input */}
+              <input
+                ref={fileInputRef}
+                id="product-image"
+                type="file"
+                accept="image/*"
+                style={{ display: 'none' }}
+                onChange={handleImageFile}
+              />
+            </div>
           </div>
         </div>
 

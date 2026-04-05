@@ -42,7 +42,6 @@ const createOrder = asyncHandler(async (req, res) => {
     throw new Error('tableId and at least one item are required');
   }
 
-  // Validate mobile if provided
   if (customerMobile && !/^\d{10}$/.test(customerMobile)) {
     res.status(400);
     throw new Error('customerMobile must be exactly 10 digits');
@@ -62,7 +61,7 @@ const createOrder = asyncHandler(async (req, res) => {
     throw new Error('Table not found');
   }
 
-  // Allow orders only if FREE (first order) or OCCUPIED with active session
+  // Allow orders only if FREE or OCCUPIED with an active session
   let activeSession = null;
   if (table.status === 'OCCUPIED') {
     activeSession = await Session.findOne({ table: tableId, status: 'ACTIVE' });
@@ -72,11 +71,8 @@ const createOrder = asyncHandler(async (req, res) => {
     }
   }
 
-  // Soft-warn if a booking exists within the next 15 min — order still created
+  // Check for an upcoming booking within 15 min
   const upcomingBooking = await getUpcomingBooking(tableId);
-  const bookingWarning = upcomingBooking
-    ? `⚠️ Table ${table.tableNumber} has a reservation at ${new Date(upcomingBooking.startTime).toLocaleTimeString()} (within 15 min). Approve only if order can be completed quickly.`
-    : null;
 
   // Build order items with server-side price calculation
   const orderItems = [];
@@ -115,6 +111,32 @@ const createOrder = asyncHandler(async (req, res) => {
   const totalAmountFixed = parseFloat(totalAmount.toFixed(2));
   const cashbackAmount = parseFloat((totalAmountFixed * 0.10).toFixed(2));
 
+  // ── No conflict: auto-approve, create session, mark table OCCUPIED ─────────
+  if (!upcomingBooking) {
+    let session = activeSession;
+    if (!session) {
+      session = await Session.create({ table: tableId });
+    }
+
+    const order = await Order.create({
+      table: tableId,
+      session: session._id,
+      customerName: customerName?.trim() || 'Customer',
+      customerMobile: customerMobile || null,
+      items: orderItems,
+      totalAmount: totalAmountFixed,
+      cashbackAmount,
+      status: 'APPROVED',
+    });
+
+    await Table.findByIdAndUpdate(tableId, { status: 'OCCUPIED' });
+
+    return res.status(201).json({ success: true, data: order, bookingWarning: null });
+  }
+
+  // ── Booking conflict: stay PLACED, cashier must review ────────────────────
+  const bookingWarning = `⚠️ Table ${table.tableNumber} has a reservation at ${new Date(upcomingBooking.startTime).toLocaleTimeString()} (within 15 min). A cashier will review before sending to the kitchen.`;
+
   const order = await Order.create({
     table: tableId,
     session: activeSession ? activeSession._id : null,
@@ -123,27 +145,28 @@ const createOrder = asyncHandler(async (req, res) => {
     items: orderItems,
     totalAmount: totalAmountFixed,
     cashbackAmount,
+    // status defaults to 'PLACED'
   });
 
   res.status(201).json({ success: true, data: order, bookingWarning });
 });
 
 // @route   GET /api/orders/pending
-// @access  Private (ADMIN, OWNER)
+// @access  Private (CASHIER, OWNER, ADMIN)
 const getPendingOrders = asyncHandler(async (req, res) => {
   const orders = await Order.find({ status: 'PLACED' })
     .populate('table', 'tableNumber floor status')
     .sort({ createdAt: 1 })
     .lean();
 
-  // Attach booking warning per order so admin can decide before approving
+  // Attach booking warning so cashier can make an informed decision
   const ordersWithWarnings = await Promise.all(
     orders.map(async (order) => {
       const warning = await getBookingWarning(order.table._id);
       return {
         ...order,
         bookingWarning: warning
-          ? `⚠️ Table ${order.table.tableNumber} has a reservation at ${new Date(warning.startTime).toLocaleTimeString()} for ${warning.name} (${warning.phone}). Approve only if order can be completed before then, or redirect the customer.`
+          ? `⚠️ Table ${order.table.tableNumber} has a reservation at ${new Date(warning.startTime).toLocaleTimeString()} for ${warning.name} (${warning.phone}). Approve only if this order can be completed before then, or redirect the customer.`
           : null,
       };
     })
@@ -153,7 +176,7 @@ const getPendingOrders = asyncHandler(async (req, res) => {
 });
 
 // @route   PATCH /api/orders/:id/approve
-// @access  Private (ADMIN, OWNER)
+// @access  Private (CASHIER, OWNER, ADMIN)
 const approveOrder = asyncHandler(async (req, res) => {
   const order = await Order.findById(req.params.id);
   if (!order) {
@@ -175,7 +198,7 @@ const approveOrder = asyncHandler(async (req, res) => {
   order.session = session._id;
   await order.save();
 
-  // Table becomes OCCUPIED only after admin approval
+  // Table becomes OCCUPIED after cashier approval
   await Table.findByIdAndUpdate(order.table, { status: 'OCCUPIED' });
 
   const populated = await order.populate('table', 'tableNumber floor status');
@@ -183,7 +206,7 @@ const approveOrder = asyncHandler(async (req, res) => {
 });
 
 // @route   PATCH /api/orders/:id/reject
-// @access  Private (ADMIN, OWNER)
+// @access  Private (CASHIER, OWNER, ADMIN)
 const rejectOrder = asyncHandler(async (req, res) => {
   const order = await Order.findById(req.params.id);
   if (!order) {
@@ -197,7 +220,7 @@ const rejectOrder = asyncHandler(async (req, res) => {
 
   order.status = 'REJECTED';
   await order.save();
-  // Table remains FREE on rejection — no status change needed
+  // Table remains FREE on rejection
 
   res.status(200).json({ success: true, data: order });
 });

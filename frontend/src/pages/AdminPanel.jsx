@@ -24,7 +24,6 @@ import TopProducts from '../components/analytics/TopProducts';
 import WarningBanner from '../components/WarningBanner';
 
 const TABS = [
-  { key: 'orders',    label: 'Orders',    icon: ClipboardList },
   { key: 'products',  label: 'Products',  icon: Package },
   { key: 'tables',    label: 'Tables',    icon: Settings },
   { key: 'analytics', label: 'Analytics', icon: BarChart3 },
@@ -33,12 +32,9 @@ const TABS = [
 
 export default function AdminPanel() {
   const { status, lastSession, toggleStatus } = useRestaurant();
-  const [activeTab, setActiveTab] = useState('orders');
+  const [activeTab, setActiveTab] = useState('products');
   const [toggling, setToggling] = useState(false);
 
-  const [pendingOrders, setPendingOrders] = useState([]);
-  const [actioning, setActioning] = useState(null);
-  const ordersIntervalRef = useRef(null);
   const productsIntervalRef = useRef(null);
   const bookingsIntervalRef = useRef(null);
 
@@ -69,10 +65,6 @@ export default function AdminPanel() {
   const [openingHour, setOpeningHour] = useState(9);
   const [closingHour, setClosingHour] = useState(22);
   const [savingHours, setSavingHours] = useState(false);
-
-  const fetchPendingOrders = useCallback(async () => {
-    try { const res = await getPendingOrders(); setPendingOrders(res.data.data); } catch {}
-  }, []);
 
   const fetchFloors = useCallback(async () => {
     try { const res = await getAllFloors(); setFloors(res.data.data); }
@@ -155,27 +147,22 @@ export default function AdminPanel() {
   };
 
   useEffect(() => {
-    // Initial load of all data
     fetchFloors();
     fetchProducts();
-    fetchPendingOrders();
     fetchBookings();
     fetchSummary();
     fetchOrderHistory();
     fetchSessionHistory();
     fetchTopProducts();
 
-    // Poll the live-data endpoints every 10 s
-    ordersIntervalRef.current   = setInterval(fetchPendingOrders, 10_000);
-    productsIntervalRef.current = setInterval(fetchProducts,      10_000);
-    bookingsIntervalRef.current = setInterval(fetchBookings,      10_000);
+    productsIntervalRef.current = setInterval(fetchProducts, 10_000);
+    bookingsIntervalRef.current = setInterval(fetchBookings, 10_000);
 
     return () => {
-      clearInterval(ordersIntervalRef.current);
       clearInterval(productsIntervalRef.current);
       clearInterval(bookingsIntervalRef.current);
     };
-  }, [fetchFloors, fetchProducts, fetchPendingOrders, fetchSummary, fetchOrderHistory, fetchSessionHistory, fetchTopProducts, fetchBookings]);
+  }, [fetchFloors, fetchProducts, fetchBookings, fetchSummary, fetchOrderHistory, fetchSessionHistory, fetchTopProducts]);
 
   useEffect(() => {
     if (selectedFloor) fetchTables(selectedFloor._id); else setTables([]);
@@ -183,20 +170,6 @@ export default function AdminPanel() {
 
   const handleApplyFilters = () => { fetchSummary(filterStart, filterEnd); fetchOrderHistory(filterStart, filterEnd); };
   const handleClearFilters = () => { setFilterStart(''); setFilterEnd(''); fetchSummary(); fetchOrderHistory(); };
-
-  const handleApprove = async (orderId) => {
-    setActioning(orderId);
-    try { await approveOrder(orderId); toast.success('Order approved — table marked occupied'); fetchPendingOrders(); if (selectedFloor) fetchTables(selectedFloor._id); }
-    catch (err) { toast.error(err.response?.data?.message || 'Failed to approve order'); }
-    finally { setActioning(null); }
-  };
-
-  const handleReject = async (orderId) => {
-    setActioning(orderId);
-    try { await rejectOrder(orderId); toast.success('Order rejected'); fetchPendingOrders(); }
-    catch (err) { toast.error(err.response?.data?.message || 'Failed to reject order'); }
-    finally { setActioning(null); }
-  };
 
   const handleToggle = async () => {
     setToggling(true);
@@ -240,7 +213,6 @@ export default function AdminPanel() {
       <div className="admin-tabs" role="tablist">
         {TABS.map((tab) => {
           const Icon = tab.icon;
-          const badge = tab.key === 'orders' && pendingOrders.length > 0 ? pendingOrders.length : null;
           return (
             <button
               key={tab.key}
@@ -252,115 +224,11 @@ export default function AdminPanel() {
             >
               <Icon size={15} />
               {tab.label}
-              {badge && <span className="admin-tab-badge">{badge}</span>}
             </button>
           );
         })}
       </div>
 
-      {/* Tab Panels */}
-      {/* ── ORDERS TAB ── */}
-      {activeTab === 'orders' && (
-        <div className="admin-tab-content">
-          {/* Restaurant Status */}
-          <div className="card">
-            <div className="card-title"><Settings size={16} />Restaurant Status</div>
-            <div className="status-row">
-              <div className="status-info">
-                <span className="status-label">Current state:</span>
-                <span className={`status-badge status-badge--${status === 'OPEN' ? 'open' : 'closed'}`}>
-                  <span className="status-dot" />{status || '…'}
-                </span>
-              </div>
-              <button
-                className={`btn-toggle btn-toggle--${status === 'OPEN' ? 'open' : 'closed'}`}
-                onClick={handleToggle} disabled={toggling} id="admin-toggle-status"
-              >
-                {toggling ? 'Updating…' : status === 'OPEN' ? 'Close Restaurant' : 'Open Restaurant'}
-              </button>
-            </div>
-            {status === 'CLOSED' && lastSession && lastSession.lastClosedAt && (
-              <div className="last-session-summary">
-                <div className="last-session-title">Last Session Summary</div>
-                <div className="last-session-grid">
-                  <div className="last-session-item">
-                    <div className="last-session-label">🟢 Opened</div>
-                    <div className="last-session-value">
-                      {lastSession.lastOpenedAt
-                        ? new Date(lastSession.lastOpenedAt).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true })
-                        : '—'}
-                    </div>
-                  </div>
-                  <div className="last-session-item">
-                    <div className="last-session-label">🔴 Closed</div>
-                    <div className="last-session-value">
-                      {new Date(lastSession.lastClosedAt).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true })}
-                    </div>
-                  </div>
-                  <div className="last-session-item last-session-item--highlight">
-                    <div className="last-session-label">💰 Revenue</div>
-                    <div className="last-session-value last-session-revenue">₹{(lastSession.totalRevenue || 0).toFixed(2)}</div>
-                  </div>
-                  <div className="last-session-item">
-                    <div className="last-session-label">📦 Orders</div>
-                    <div className="last-session-value">{lastSession.totalOrders ?? 0} paid orders</div>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Pending Orders */}
-          <div className="card">
-            <div className="card-title">
-              <ClipboardList size={16} />Pending Orders
-              {pendingOrders.length > 0 && (
-                <span style={{ marginLeft: 8, background: 'var(--accent)', color: '#fff', borderRadius: 999, fontSize: 11, padding: '1px 8px', fontWeight: 700 }}>
-                  {pendingOrders.length}
-                </span>
-              )}
-            </div>
-            {pendingOrders.length === 0 ? (
-              <p style={{ color: 'var(--text-muted)', fontSize: 14 }}>No pending orders right now.</p>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                {pendingOrders.map((order) => (
-                  <div key={order._id} style={{ background: 'var(--bg-elevated)', borderRadius: 8, border: order.bookingWarning ? '1px solid rgba(251,191,36,0.35)' : '1px solid var(--border-default)', overflow: 'hidden' }}>
-                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16, flexWrap: 'wrap', padding: '12px 16px' }}>
-                      <div style={{ flex: 1, minWidth: 200 }}>
-                        <div style={{ fontWeight: 600, marginBottom: 4 }}>
-                          Table {order.table?.tableNumber ?? '—'}
-                          <span style={{ fontWeight: 400, color: 'var(--text-muted)', marginLeft: 8, fontSize: 13 }}>· {order.customerName}</span>
-                        </div>
-                        <div style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 6 }}>
-                          {order.items.map((it, i) => (
-                            <span key={i}>{it.name}{it.variant?.name ? ` (${it.variant.name})` : ''} ×{it.quantity}{i < order.items.length - 1 ? ', ' : ''}</span>
-                          ))}
-                        </div>
-                        <div style={{ fontWeight: 700, fontSize: 14 }}>₹{order.totalAmount}</div>
-                      </div>
-                      <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                        <button className="btn btn-primary btn-sm" onClick={() => handleApprove(order._id)} disabled={actioning === order._id} id={`approve-order-${order._id}`}>
-                          <CheckCircle size={14} />{actioning === order._id ? '…' : 'Approve'}
-                        </button>
-                        <button className="btn btn-secondary btn-sm" onClick={() => handleReject(order._id)} disabled={actioning === order._id} id={`reject-order-${order._id}`} style={{ color: 'var(--danger)' }}>
-                          <XCircle size={14} />Reject
-                        </button>
-                      </div>
-                    </div>
-                    {order.bookingWarning && (
-                      <div id={`booking-warning-${order._id}`} role="alert" style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '10px 16px', background: 'rgba(251,191,36,0.08)', borderTop: '1px solid rgba(251,191,36,0.22)' }}>
-                        <span style={{ fontSize: 15, flexShrink: 0, lineHeight: 1.4 }}>⚠️</span>
-                        <span style={{ fontSize: 12.5, lineHeight: 1.5, color: '#fbbf24', fontWeight: 500 }}>{order.bookingWarning}</span>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
 
       {/* ── PRODUCTS TAB ── */}
       {activeTab === 'products' && (

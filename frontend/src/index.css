@@ -6712,3 +6712,200 @@ ul, ol {
   padding: 5px 12px;
   border-radius: var(--radius-sm);
 }
+
+/* ================================================================
+   IMAGE UPLOAD WIDGET (AddProductForm)
+   ================================================================ */
+
+/* Outer wrapper that fills the form-group column */
+.img-upload-area {
+  width: 100%;
+}
+
+/* ── Drop-zone / Pick button (no image yet) ── */
+.img-upload-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 120px;
+  padding: var(--space-lg);
+  background: var(--bg-elevated);
+  border: 2px dashed var(--border-default);
+  border-radius: var(--radius-lg);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: border-color var(--transition-fast), background var(--transition-fast);
+}
+
+.img-upload-btn:hover {
+  border-color: var(--accent);
+  background: var(--accent-muted);
+  color: var(--accent);
+}
+
+.img-upload-hint {
+  font-size: 13px;
+  font-weight: 600;
+  color: inherit;
+}
+
+.img-upload-sub {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* ── Preview panel (image chosen) ── */
+.img-upload-preview {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-sm);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+}
+
+.img-upload-thumb {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: var(--radius-md);
+  flex-shrink: 0;
+  border: 1px solid var(--border-subtle);
+}
+
+.img-upload-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+}
+
+/* ================================================================
+   CASHIER — PENDING ORDERS (booking-conflict review)
+   ================================================================ */
+
+.cs-pending-section {
+  margin: var(--space-lg) var(--space-lg) 0;
+  border: 1.5px solid rgba(251, 191, 36, 0.4);
+  border-radius: var(--radius-lg);
+  background: rgba(251, 191, 36, 0.04);
+  overflow: hidden;
+}
+
+/* Amber pulsing header bar */
+.cs-pending-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: 10px var(--space-lg);
+  background: rgba(251, 191, 36, 0.12);
+  border-bottom: 1px solid rgba(251, 191, 36, 0.25);
+  animation: cs-pending-pulse 2s ease-in-out infinite;
+}
+
+@keyframes cs-pending-pulse {
+  0%, 100% { background: rgba(251, 191, 36, 0.12); }
+  50%       { background: rgba(251, 191, 36, 0.22); }
+}
+
+.cs-pending-icon {
+  color: #fbbf24;
+  flex-shrink: 0;
+}
+
+.cs-pending-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #fbbf24;
+  letter-spacing: 0.2px;
+}
+
+/* List of pending order cards */
+.cs-pending-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.cs-pending-card {
+  border-bottom: 1px solid rgba(251, 191, 36, 0.15);
+}
+
+.cs-pending-card:last-child {
+  border-bottom: none;
+}
+
+/* Warning text stripe inside each card */
+.cs-pending-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px var(--space-lg);
+  background: rgba(251, 191, 36, 0.08);
+  border-bottom: 1px solid rgba(251, 191, 36, 0.15);
+}
+
+.cs-pending-warning__icon {
+  font-size: 14px;
+  flex-shrink: 0;
+  line-height: 1.5;
+}
+
+.cs-pending-warning__text {
+  font-size: 12px;
+  color: #fbbf24;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+/* Order detail row */
+.cs-pending-body {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-lg);
+  flex-wrap: wrap;
+  padding: 12px var(--space-lg);
+}
+
+.cs-pending-info {
+  flex: 1;
+  min-width: 200px;
+}
+
+.cs-pending-table {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.cs-pending-customer {
+  font-weight: 400;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.cs-pending-items {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+  line-height: 1.4;
+}
+
+.cs-pending-total {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.cs-pending-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  flex-shrink: 0;
+}
